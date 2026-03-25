@@ -17,7 +17,11 @@ export type TgUser = {
   last_name: string | null;
 };
 
-export default function ChatLayout({ children }: { children: React.ReactNode }) {
+export default function ChatLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const [user, setUser] = useState<TgUser | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -70,9 +74,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             </div>
           </header>
           <Separator />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            {children}
-          </div>
+          <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
         </div>
       </div>
     </SocketProvider>
