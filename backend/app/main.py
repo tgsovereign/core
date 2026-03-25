@@ -5,14 +5,32 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import auth, chats, agent, conversations, ws
+from app.routers import _state as router_state
+from app.services.rabbitmq import get_connection, declare_infrastructure
 from app.services.telegram import telegram_manager
+from app.services.ws_relay import start_ws_relay
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Start RabbitMQ connections
+    rmq_conn = await get_connection()
+    channel = await rmq_conn.channel()
+    await declare_infrastructure(channel)
+    router_state.rmq_channel = channel
+
+    relay_conn = await start_ws_relay()
+
     yield
+
+    # Shutdown
+    router_state.rmq_channel = None
+    await channel.close()
+    await rmq_conn.close()
+    await relay_conn.close()
     await telegram_manager.disconnect_all()
 
 

@@ -9,6 +9,7 @@ Postgres cluster, App Platform for the backend, and Vercel for the frontend.
 - A [Vercel](https://vercel.com/) account
 - A Telegram API ID & hash from <https://my.telegram.org>
 - An OpenAI API key
+- A RabbitMQ instance (see step 3)
 
 ## 1. Create a DigitalOcean Project
 
@@ -41,9 +42,32 @@ Once the cluster is ready:
    ```
    Note: also change `sslmode=require` to `ssl=true` for asyncpg compatibility.
 
-Save this connection string — you'll need it in the next step.
+Save this connection string — you'll need it in the next steps.
 
-## 3. Deploy the Backend on App Platform
+## 3. Set Up RabbitMQ
+
+Sovereign uses RabbitMQ to distribute agent tasks to helper workers.
+DigitalOcean does not offer a managed RabbitMQ service, so you have two options:
+
+**Option A — Managed RabbitMQ (recommended):**
+Use [CloudAMQP](https://www.cloudamqp.com/) which has a free tier (Little
+Lemur). Create an instance and copy the AMQP connection URL.
+
+**Option B — Self-hosted on a Droplet:**
+Run RabbitMQ on a small Droplet (1 GB RAM is enough) in the same datacenter
+region as your database and App Platform app:
+
+```bash
+docker run -d --name rabbitmq \
+  -p 5672:5672 -p 15672:15672 \
+  --restart unless-stopped \
+  rabbitmq:3-management-alpine
+```
+
+Save the AMQP URL (e.g. `amqp://guest:guest@YOUR_DROPLET_IP:5672/`). For
+production, change the default guest credentials.
+
+## 4. Deploy the Backend on App Platform
 
 1. Go to **Apps → Create App**.
 2. Choose **GitHub** as the source and connect your fork of the Sovereign
@@ -63,6 +87,7 @@ Save this connection string — you'll need it in the next step.
    | Variable                 | Value                                                                                                       |
    | ------------------------ | ----------------------------------------------------------------------------------------------------------- |
    | `DATABASE_URL`           | The `postgresql+asyncpg://...` connection string from step 2                                                |
+   | `RABBITMQ_URL`           | The AMQP connection URL from step 3                                                                         |
    | `TELEGRAM_API_ID`        | Your Telegram API ID                                                                                        |
    | `TELEGRAM_API_HASH`      | Your Telegram API hash                                                                                      |
    | `OPENAI_API_KEY`         | Your OpenAI API key                                                                                         |
@@ -80,7 +105,28 @@ curl https://sovereign-backend-xxxxx.ondigitalocean.app/api/health
 # → {"status":"ok"}
 ```
 
-## 4. Deploy the Frontend on Vercel
+## 5. Deploy the Helper Worker
+
+The helper service processes agent tasks (AI calls + Telegram tool execution).
+It connects to the same Postgres and RabbitMQ as the backend.
+
+In your App Platform app, add a **Worker** component:
+
+1. Click **Add Resource → Worker** in the app settings.
+2. Use the same GitHub source and Dockerfile as the backend.
+3. Set the **Run command** to:
+   ```
+   uv run python -m app.helper
+   ```
+4. Set the same environment variables as the backend (`DATABASE_URL`,
+   `RABBITMQ_URL`, `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `OPENAI_API_KEY`,
+   `SESSION_ENCRYPTION_KEY`).
+5. Pick the Basic plan ($5/mo).
+
+You can add multiple worker instances to handle more concurrent requests — they
+compete for tasks from the same RabbitMQ queue.
+
+## 6. Deploy the Frontend on Vercel
 
 1. Go to [vercel.com/new](https://vercel.com/new) and import your fork of the
    Sovereign repository.
@@ -99,7 +145,7 @@ curl https://sovereign-backend-xxxxx.ondigitalocean.app/api/health
 Once the deployment is complete, your frontend will be live at your Vercel URL
 (e.g. `https://sovereign-xxxxx.vercel.app`).
 
-## 5. Update Backend CORS (Important)
+## 7. Update Backend CORS (Important)
 
 By default the backend allows all origins. For production, you should restrict
 CORS to your frontend domain. Set an additional environment variable on the
@@ -131,12 +177,14 @@ App Platform backend:
 
 Rough monthly costs for a minimal setup:
 
-| Service                 | Cost        |
-| ----------------------- | ----------- |
-| DO Managed Postgres     | ~$15/mo     |
-| DO App Platform (Basic) | ~$5/mo      |
-| Vercel (Hobby)          | Free        |
-| **Total**               | **~$20/mo** |
+| Service                        | Cost        |
+| ------------------------------ | ----------- |
+| DO Managed Postgres            | ~$15/mo     |
+| DO App Platform — Backend      | ~$5/mo      |
+| DO App Platform — Helper       | ~$5/mo      |
+| RabbitMQ (CloudAMQP free tier) | Free        |
+| Vercel (Hobby)                 | Free        |
+| **Total**                      | **~$25/mo** |
 
 ## Updating
 

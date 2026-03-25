@@ -6,7 +6,7 @@ reverse proxy.
 
 ## Prerequisites
 
-- A Linux VPS (Ubuntu 22.04+ recommended) with at least 1 GB RAM
+- A Linux VPS (Ubuntu 22.04+ recommended) with at least 2 GB RAM
 - A domain name with DNS pointed at your server's IP (e.g. `sovereign.example.com`)
 - [Docker](https://docs.docker.com/engine/install/) & Docker Compose installed
 - A Telegram API ID & hash from <https://my.telegram.org>
@@ -36,6 +36,7 @@ OPENAI_API_KEY=sk-...
 JWT_SECRET=some-long-random-string
 SESSION_ENCRYPTION_KEY=generate-with-command-below
 DATABASE_URL=postgresql+asyncpg://sovereign:sovereign@postgres:5432/sovereign
+RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
 ```
 
 Generate the session encryption key:
@@ -101,6 +102,13 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://sovereign:sovereign@postgres:5432/sovereign
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+
+  helper:
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://sovereign:sovereign@postgres:5432/sovereign
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
 
   frontend:
     environment:
@@ -145,6 +153,19 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 Database migrations run automatically on backend startup.
 
+## Scaling Helpers
+
+Agent tasks (AI processing + Telegram tool calls) are handled by the **helper**
+service via a RabbitMQ work queue. By default one helper runs, but you can scale
+horizontally to handle more concurrent requests:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --scale helper=3
+```
+
+Each helper competes for tasks from the same queue, so work is distributed
+automatically.
+
 ## Monitoring
 
 Check service health:
@@ -156,9 +177,16 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 # Backend logs
 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f backend
 
+# Helper logs
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f helper
+
 # Health check
 curl https://sovereign.example.com/api/health
 ```
+
+RabbitMQ exposes a management UI on port **15672** (guest/guest) for inspecting
+queues and message throughput. In production you should either restrict access to
+this port via your firewall or change the default credentials.
 
 ## Troubleshooting
 
