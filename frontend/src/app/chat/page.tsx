@@ -123,10 +123,10 @@ export default function NewChatPage() {
         </div>
       </main>
 
-      <Separator />
-      <footer className="px-3 py-3.5 sm:px-6">
+      <Separator className="sm:block hidden" />
+      <footer className="px-3 py-3.5 sm:px-6 max-sm:px-0 max-sm:py-0">
         <form
-          className="mx-auto flex max-w-3xl gap-2"
+          className="mx-auto flex max-w-3xl gap-2 max-sm:gap-0"
           onSubmit={(e) => {
             e.preventDefault();
             handleSend();
@@ -136,9 +136,14 @@ export default function NewChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1"
+            className="flex-1 max-sm:h-full max-sm:rounded-none max-sm:border-0 max-sm:focus-visible:ring-0 max-sm:focus-visible:border-0"
           />
-          <Button type="submit" size="icon" disabled={!input.trim() || busy}>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={!input.trim() || busy}
+            className="max-sm:h-full max-sm:rounded-none max-sm:bg-transparent max-sm:text-foreground max-sm:shadow-none max-sm:hover:bg-transparent"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </form>

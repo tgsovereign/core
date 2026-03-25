@@ -119,7 +119,7 @@ export default function Sidebar({
               </div>
               <Tooltip>
                 <TooltipTrigger
-                  className="ml-1 hidden h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-destructive group-hover:inline-flex"
+                  className="ml-1 inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-destructive lg:hidden lg:group-hover:inline-flex"
                   onClick={(e) => handleDelete(e, conv.id)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
