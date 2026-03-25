@@ -13,7 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 type Step = "phone" | "code" | "2fa";
 
@@ -109,6 +110,10 @@ export default function LoginPage() {
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
         <div className="flex flex-col gap-6">
+          <div className="flex flex-col items-center gap-2">
+            <Image src="/logo.svg" alt="Sovereign" width={48} height={48} />
+            <h1 className="text-2xl font-bold">Sovereign</h1>
+          </div>
           <Card>
             <CardHeader>
               <CardTitle className="text-xl">{title}</CardTitle>
@@ -157,22 +162,22 @@ export default function LoginPage() {
                         required
                       />
                     </div>
-                    <div className="grid gap-3">
-                      <Button type="submit" className="w-full" disabled={loading || !code.trim()}>
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Verify
-                      </Button>
+                    <div className="flex gap-3">
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full"
                         onClick={() => {
                           setStep("phone");
                           setCode("");
                           setError("");
                         }}
                       >
+                        <ArrowLeft className="mr-1 h-4 w-4" />
                         Back
+                      </Button>
+                      <Button type="submit" className="flex-1" disabled={loading || !code.trim()}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Verify
                       </Button>
                     </div>
                   </div>
@@ -194,22 +199,22 @@ export default function LoginPage() {
                         required
                       />
                     </div>
-                    <div className="grid gap-3">
-                      <Button type="submit" className="w-full" disabled={loading || !password.trim()}>
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Submit
-                      </Button>
+                    <div className="flex gap-3">
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full"
                         onClick={() => {
                           setStep("code");
                           setPassword("");
                           setError("");
                         }}
                       >
+                        <ArrowLeft className="mr-1 h-4 w-4" />
                         Back
+                      </Button>
+                      <Button type="submit" className="flex-1" disabled={loading || !password.trim()}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Submit
                       </Button>
                     </div>
                   </div>
@@ -217,6 +222,19 @@ export default function LoginPage() {
               )}
             </CardContent>
           </Card>
+          <p className="text-center text-xs text-muted-foreground px-2">
+            Sovereign is an agentic Telegram client. By signing in, you agree to
+            our{" "}
+            <a href="https://www.tgsovereign.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="https://www.tgsovereign.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+              Privacy Policy
+            </a>
+            , and acknowledge that our AI agent will have access to your Telegram
+            account data to function on your behalf.
+          </p>
         </div>
       </div>
     </div>
