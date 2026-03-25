@@ -135,7 +135,7 @@ export default function NewChatPage() {
       </main>
 
       <Separator />
-      <footer className="max-sm:p-0 px-3 py-3">
+      <footer className="max-sm:p-0 px-3 py-3.5 sm:px-6">
         <form
           className="mx-auto flex max-w-3xl gap-2 max-sm:gap-0"
           onSubmit={(e) => {
