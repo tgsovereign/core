@@ -189,8 +189,8 @@ export default function ConversationPage({
         </div>
       </main>
 
-      <Separator className="sm:block hidden" />
-      <footer className="px-3 py-3.5 sm:px-6 max-sm:px-0 max-sm:py-0">
+      <Separator />
+      <footer className="max-sm:p-0 px-3 py-3 sm:px-6 sm:py-3.5">
         <form
           className="mx-auto flex max-w-3xl gap-2 max-sm:gap-0"
           onSubmit={(e) => {
@@ -202,15 +202,15 @@ export default function ConversationPage({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 max-sm:h-full max-sm:rounded-none max-sm:border-0 max-sm:focus-visible:ring-0 max-sm:focus-visible:border-0"
+            className="flex-1 max-sm:border-0 max-sm:rounded-none max-sm:h-15 max-sm:px-4 max-sm:focus-visible:ring-0 max-sm:focus-visible:border-0"
           />
           <Button
             type="submit"
             size="icon"
             disabled={!input.trim() || busy}
-            className="max-sm:h-full max-sm:rounded-none max-sm:bg-transparent max-sm:text-foreground max-sm:shadow-none max-sm:hover:bg-transparent"
+            className="max-sm:bg-transparent max-sm:shadow-none max-sm:hover:bg-transparent max-sm:text-violet-400 max-sm:h-15 max-sm:w-15"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-4 w-4 max-sm:fill-current" />
           </Button>
         </form>
       </footer>

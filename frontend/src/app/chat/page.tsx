@@ -26,50 +26,61 @@ export default function NewChatPage() {
   const conversationIdRef = useRef<string | null>(null);
   const { send, addListener } = useSocket();
 
-  const handleWs = useCallback((msg: WsMessage) => {
-    if (msg.type === "conversation_title_updated") return;
+  const handleWs = useCallback(
+    (msg: WsMessage) => {
+      if (msg.type === "conversation_title_updated") return;
 
-    const rid = msg.request_id;
-    if (rid !== pendingRef.current) return;
+      const rid = msg.request_id;
+      if (rid !== pendingRef.current) return;
 
-    if (msg.type === "agent_tool_execution") {
-      const tc: ToolCall = {
-        tool: msg.tool,
-        arguments: msg.arguments,
-        status: msg.status,
-      };
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last && last.role === "assistant" && last.id === rid) {
-          const tools = [...(last.tools ?? [])];
-          const existing = tools.findIndex(
-            (t) => t.tool === tc.tool && JSON.stringify(t.arguments) === JSON.stringify(tc.arguments),
-          );
-          if (existing >= 0) tools[existing] = tc;
-          else tools.push(tc);
-          return [...prev.slice(0, -1), { ...last, tools }];
-        }
-        return [...prev, { id: rid, role: "assistant" as const, content: "", tools: [tc] }];
-      });
-    }
-
-    if (msg.type === "agent_response" && msg.done) {
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last && last.role === "assistant" && last.id === rid) {
-          return [...prev.slice(0, -1), { ...last, content: msg.content }];
-        }
-        return [...prev, { id: rid, role: "assistant" as const, content: msg.content }];
-      });
-      pendingRef.current = null;
-      setBusy(false);
-
-      // Navigate to the real conversation URL now that we have a response
-      if (conversationIdRef.current) {
-        router.replace(`/chat/${conversationIdRef.current}`);
+      if (msg.type === "agent_tool_execution") {
+        const tc: ToolCall = {
+          tool: msg.tool,
+          arguments: msg.arguments,
+          status: msg.status,
+        };
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last && last.role === "assistant" && last.id === rid) {
+            const tools = [...(last.tools ?? [])];
+            const existing = tools.findIndex(
+              (t) =>
+                t.tool === tc.tool &&
+                JSON.stringify(t.arguments) === JSON.stringify(tc.arguments),
+            );
+            if (existing >= 0) tools[existing] = tc;
+            else tools.push(tc);
+            return [...prev.slice(0, -1), { ...last, tools }];
+          }
+          return [
+            ...prev,
+            { id: rid, role: "assistant" as const, content: "", tools: [tc] },
+          ];
+        });
       }
-    }
-  }, [router]);
+
+      if (msg.type === "agent_response" && msg.done) {
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last && last.role === "assistant" && last.id === rid) {
+            return [...prev.slice(0, -1), { ...last, content: msg.content }];
+          }
+          return [
+            ...prev,
+            { id: rid, role: "assistant" as const, content: msg.content },
+          ];
+        });
+        pendingRef.current = null;
+        setBusy(false);
+
+        // Navigate to the real conversation URL now that we have a response
+        if (conversationIdRef.current) {
+          router.replace(`/chat/${conversationIdRef.current}`);
+        }
+      }
+    },
+    [router],
+  );
 
   useEffect(() => addListener(handleWs), [addListener, handleWs]);
 
@@ -123,8 +134,8 @@ export default function NewChatPage() {
         </div>
       </main>
 
-      <Separator className="sm:block hidden" />
-      <footer className="px-3 py-3.5 sm:px-6 max-sm:px-0 max-sm:py-0">
+      <Separator />
+      <footer className="max-sm:p-0 px-3 py-3">
         <form
           className="mx-auto flex max-w-3xl gap-2 max-sm:gap-0"
           onSubmit={(e) => {
@@ -136,15 +147,15 @@ export default function NewChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 max-sm:h-full max-sm:rounded-none max-sm:border-0 max-sm:focus-visible:ring-0 max-sm:focus-visible:border-0"
+            className="flex-1 max-sm:border-0 max-sm:rounded-none max-sm:h-15 max-sm:px-4 max-sm:focus-visible:ring-0 max-sm:focus-visible:border-0"
           />
           <Button
             type="submit"
             size="icon"
             disabled={!input.trim() || busy}
-            className="max-sm:h-full max-sm:rounded-none max-sm:bg-transparent max-sm:text-foreground max-sm:shadow-none max-sm:hover:bg-transparent"
+            className="max-sm:bg-transparent max-sm:shadow-none max-sm:hover:bg-transparent max-sm:text-violet-400 max-sm:h-15 max-sm:w-15"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-4 w-4 max-sm:fill-current" />
           </Button>
         </form>
       </footer>
