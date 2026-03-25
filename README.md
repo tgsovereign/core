@@ -2,15 +2,9 @@
 
 Agentic Telegram client.
 
-## Prerequisites
+## Quick Start
 
-- [Docker](https://docs.docker.com/get-docker/) & Docker Compose
-- [uv](https://docs.astral.sh/uv/) (Python package manager)
-- [Node.js](https://nodejs.org/) 20+ & npm
-- A Telegram API ID & hash from <https://my.telegram.org>
-- An OpenAI API key
-
-## Quick start (Docker)
+The fastest way to run Sovereign locally:
 
 ```bash
 docker compose up --build
@@ -19,74 +13,17 @@ docker compose up --build
 This starts Postgres, the backend, and the frontend. The app is available at
 <http://localhost:3000>.
 
-## Development setup
+## Documentation
 
-### 1. Start Postgres
+| Guide                                            | Description                                             |
+| ------------------------------------------------ | ------------------------------------------------------- |
+| [Development Setup](docs/DEVELOPMENT.md)         | Local dev environment, running tests, and contributing  |
+| [Self-Host with Docker Compose](docs/COMPOSE.md) | Deploy on any VPS with automatic HTTPS via Caddy        |
+| [Self-Host on DigitalOcean](docs/DO.md)          | Deploy using DO Managed Postgres, App Platform & Vercel |
 
-```bash
-docker compose up postgres -d
-```
+## Prerequisites
 
-This runs Postgres 17 on `localhost:5432` with user/password/db all set to
-`sovereign`.
+- A Telegram API ID & hash from <https://my.telegram.org>
+- An OpenAI API key
 
-### 2. Backend
-
-```bash
-cd backend
-cp .env.example .env   # then fill in your secrets
-```
-
-Required `.env` values:
-
-| Variable                 | Description                                                                 |
-| ------------------------ | --------------------------------------------------------------------------- |
-| `TELEGRAM_API_ID`        | From <https://my.telegram.org>                                              |
-| `TELEGRAM_API_HASH`      | From <https://my.telegram.org>                                              |
-| `OPENAI_API_KEY`         | OpenAI API key                                                              |
-| `JWT_SECRET`             | Any random string                                                           |
-| `SESSION_ENCRYPTION_KEY` | Generate with the command in `.env.example`                                 |
-| `DATABASE_URL`           | Defaults to local Postgres (`sovereign:sovereign@localhost:5432/sovereign`) |
-
-Run database migrations and start the server:
-
-```bash
-uv run alembic upgrade head
-uv run uvicorn app.main:app --reload --port 8000
-```
-
-The API is available at <http://localhost:8000>.
-
-### 3. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The UI is available at <http://localhost:3000>.
-
-## Production migrations
-
-To run Alembic migrations against a production database, set `DATABASE_URL` to
-point at the production Postgres instance and run from the `backend/` directory:
-
-```bash
-cd backend
-DATABASE_URL="postgresql+asyncpg://user:pass@prod-host:5432/sovereign" \
-  uv run alembic upgrade head
-```
-
-Alternatively, if you keep a `.env.prod` file with production secrets:
-
-```bash
-cd backend
-env $(grep -v '^#' .env.prod | xargs) uv run alembic upgrade head
-```
-
-To check the current migration revision without applying changes:
-
-```bash
-DATABASE_URL="..." uv run alembic current
-```
+See the individual guides above for full requirements.
