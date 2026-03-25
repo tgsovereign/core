@@ -164,7 +164,10 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --scale he
 ```
 
 Each helper competes for tasks from the same queue, so work is distributed
-automatically.
+automatically. Within a single helper, concurrency is controlled by the
+`PREFETCH_COUNT` environment variable (default `8`). Lower it on
+memory-constrained hosts or raise it if the helper is mostly waiting on API
+calls.
 
 ## Monitoring
 

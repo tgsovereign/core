@@ -58,7 +58,8 @@ cd backend
 uv run python -m app.helper
 ```
 
-The helper shares the same `.env` as the backend. You can run multiple helpers
+The helper shares the same `.env` as the backend. Each helper processes up to
+`PREFETCH_COUNT` tasks concurrently (default `8`). You can run multiple helpers
 in parallel — they compete for tasks from the same queue.
 
 ## 4. Frontend

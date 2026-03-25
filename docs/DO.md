@@ -123,8 +123,9 @@ In your App Platform app, add a **Worker** component:
    `SESSION_ENCRYPTION_KEY`).
 5. Pick the Basic plan ($5/mo).
 
-You can add multiple worker instances to handle more concurrent requests — they
-compete for tasks from the same RabbitMQ queue.
+Each helper processes up to `PREFETCH_COUNT` tasks concurrently (default `8`).
+You can add multiple worker instances to handle even more load — they compete
+for tasks from the same RabbitMQ queue.
 
 ## 6. Deploy the Frontend on Vercel
 

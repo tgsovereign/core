@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import os
 import uuid
 
 import aio_pika
@@ -133,17 +134,19 @@ async def _process_task(
 async def main() -> None:
     logger.info("Helper starting...")
 
+    prefetch_count = int(os.environ.get("PREFETCH_COUNT") or 8)
+
     connection = await get_connection()
     channel = await connection.channel()
-    await channel.set_qos(prefetch_count=1)
+    await channel.set_qos(prefetch_count=prefetch_count)
 
     queue, ws_exchange = await declare_infrastructure(channel)
 
-    logger.info("Helper ready — consuming from %s", TASK_QUEUE)
+    logger.info("Helper ready — consuming from %s (prefetch=%d)", TASK_QUEUE, prefetch_count)
 
     async with queue.iterator() as queue_iter:
         async for message in queue_iter:
-            await _process_task(message, ws_exchange)
+            asyncio.create_task(_process_task(message, ws_exchange))
 
 
 if __name__ == "__main__":
