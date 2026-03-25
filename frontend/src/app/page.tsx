@@ -3,11 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, setToken } from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 type Step = "phone" | "code" | "2fa";
 
@@ -82,93 +89,154 @@ export default function LoginPage() {
     }
   }
 
+  const stepConfig = {
+    phone: {
+      title: "Login to your account",
+      description: "Enter your phone number to sign in via Telegram",
+    },
+    code: {
+      title: "Check your Telegram",
+      description: "Enter the verification code we sent to your account",
+    },
+    "2fa": {
+      title: "Two-factor authentication",
+      description: "Enter your Telegram 2FA password to continue",
+    },
+  };
+
+  const { title, description } = stepConfig[step];
+
   return (
-    <div className="flex h-full items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Sovereign</CardTitle>
-          <CardDescription>Sign in with Telegram</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <p className="mb-4 text-sm text-destructive text-center">{error}</p>
-          )}
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col items-center gap-2">
+            <Image src="/logo.svg" alt="Sovereign" width={48} height={48} />
+            <h1 className="text-2xl font-bold">Sovereign</h1>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">{title}</CardTitle>
+              <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <p className="mb-4 text-sm text-destructive">{error}</p>
+              )}
 
-          {step === "phone" && (
-            <form onSubmit={handlePhone} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 234 567 8900"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading || !phone.trim()}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Send Code
-              </Button>
-            </form>
-          )}
+              {step === "phone" && (
+                <form onSubmit={handlePhone}>
+                  <div className="grid gap-6">
+                    <div className="grid gap-2">
+                      <Label htmlFor="phone">Phone number</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+1 234 567 8900"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading || !phone.trim()}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Send Code
+                    </Button>
+                  </div>
+                </form>
+              )}
 
-          {step === "code" && (
-            <form onSubmit={handleCode} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="code">Verification code</Label>
-                <Input
-                  id="code"
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && code.trim() && !loading) {
-                      e.preventDefault();
-                      handleCode(e as unknown as React.FormEvent);
-                    }
-                  }}
-                  placeholder="Enter code from Telegram"
-                  autoFocus
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading || !code.trim()}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Verify Code
-              </Button>
-            </form>
-          )}
+              {step === "code" && (
+                <form onSubmit={handleCode}>
+                  <div className="grid gap-6">
+                    <div className="grid gap-2">
+                      <Label htmlFor="code">Verification code</Label>
+                      <Input
+                        id="code"
+                        type="text"
+                        inputMode="numeric"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder="12345"
+                        autoFocus
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setStep("phone");
+                          setCode("");
+                          setError("");
+                        }}
+                      >
+                        <ArrowLeft className="mr-1 h-4 w-4" />
+                        Back
+                      </Button>
+                      <Button type="submit" className="flex-1" disabled={loading || !code.trim()}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Verify
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              )}
 
-          {step === "2fa" && (
-            <form onSubmit={handle2FA} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Two-factor password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && password.trim() && !loading) {
-                      e.preventDefault();
-                      handle2FA(e as unknown as React.FormEvent);
-                    }
-                  }}
-                  placeholder="Enter your 2FA password"
-                  autoFocus
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading || !password.trim()}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Submit
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+              {step === "2fa" && (
+                <form onSubmit={handle2FA}>
+                  <div className="grid gap-6">
+                    <div className="grid gap-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your 2FA password"
+                        autoFocus
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setStep("code");
+                          setPassword("");
+                          setError("");
+                        }}
+                      >
+                        <ArrowLeft className="mr-1 h-4 w-4" />
+                        Back
+                      </Button>
+                      <Button type="submit" className="flex-1" disabled={loading || !password.trim()}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Submit
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+          <p className="text-center text-xs text-muted-foreground px-2">
+            Sovereign is an agentic Telegram client. By signing in, you agree to
+            our{" "}
+            <a href="https://www.tgsovereign.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="https://www.tgsovereign.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">
+              Privacy Policy
+            </a>
+            , and acknowledge that our AI agent will have access to your Telegram
+            account data to function on your behalf.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
