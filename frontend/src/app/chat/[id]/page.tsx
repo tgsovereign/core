@@ -190,7 +190,7 @@ export default function ConversationPage({
       </main>
 
       <Separator />
-      <footer className="px-3 py-3 sm:px-6 sm:py-4">
+      <footer className="px-3 py-3.5 sm:px-6">
         <form
           className="mx-auto flex max-w-3xl gap-2"
           onSubmit={(e) => {

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, clearToken, api } from "@/lib/api";
 import { SocketProvider } from "@/hooks/useSocket";
+import Image from "next/image";
 import { Menu } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import Sidebar from "@/components/Sidebar";
@@ -59,6 +60,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
               >
                 <Menu className="h-5 w-5" />
               </button>
+              <Image src="/logo.svg" alt="Sovereign" width={28} height={28} />
               <h1 className="text-lg font-semibold tracking-tight">
                 Sovereign
               </h1>
