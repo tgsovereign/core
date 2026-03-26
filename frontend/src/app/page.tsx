@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, getToken, setToken } from "@/lib/api";
+import { api, setToken } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -20,12 +20,6 @@ type Step = "phone" | "code" | "2fa";
 
 export default function LoginPage() {
   const router = useRouter();
-
-  useEffect(() => {
-    if (getToken()) {
-      router.replace("/chat");
-    }
-  }, [router]);
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");

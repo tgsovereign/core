@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getToken, clearToken, api } from "@/lib/api";
+import { clearToken, api } from "@/lib/api";
 import { SocketProvider } from "@/hooks/useSocket";
 import Image from "next/image";
 import { Menu } from "lucide-react";
@@ -27,10 +27,6 @@ export default function ChatLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) {
-      router.replace("/");
-      return;
-    }
     api<TgUser>("/api/auth/me")
       .then(setUser)
       .catch(() => {
