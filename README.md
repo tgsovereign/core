@@ -15,11 +15,10 @@ This starts Postgres, the backend, and the frontend. The app is available at
 
 ## Documentation
 
-| Guide                                            | Description                                             |
-| ------------------------------------------------ | ------------------------------------------------------- |
-| [Development Setup](docs/DEVELOPMENT.md)         | Local dev environment, running tests, and contributing  |
-| [Self-Host with Docker Compose](docs/COMPOSE.md) | Deploy on any VPS with automatic HTTPS via Caddy        |
-| [Self-Host on DigitalOcean](docs/DO.md)          | Deploy using DO Managed Postgres, App Platform & Vercel |
+| Guide                                            | Description                                            |
+| ------------------------------------------------ | ------------------------------------------------------ |
+| [Development Setup](docs/DEVELOPMENT.md)         | Local dev environment, running tests, and contributing |
+| [Self-Host with Docker Compose](docs/COMPOSE.md) | Deploy on any VPS with automatic HTTPS via Caddy       |
 
 ## Prerequisites
 
