@@ -9,6 +9,8 @@ from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import (
     MeResponse,
+    SaveApiKeyRequest,
+    SaveApiKeyResponse,
     SendCodeRequest,
     SendCodeResponse,
     Verify2FARequest,
@@ -18,6 +20,7 @@ from app.schemas.auth import (
 )
 from app.services.auth import get_current_user
 from app.services.telegram import telegram_manager
+from app.telegram.session_store import encrypt_session
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -72,12 +75,12 @@ async def send_code(req: SendCodeRequest):
 @router.post("/verify-code", response_model=VerifyCodeResponse)
 async def verify_code(req: VerifyCodeRequest, db: AsyncSession = Depends(get_db)):
     try:
-        token, needs_2fa = await telegram_manager.verify_code(
+        token, needs_2fa, has_openai_key = await telegram_manager.verify_code(
             req.phone, req.code, req.phone_code_hash, db
         )
         if needs_2fa:
             return VerifyCodeResponse(next="2fa")
-        return VerifyCodeResponse(token=token)
+        return VerifyCodeResponse(token=token, has_openai_key=has_openai_key)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -85,7 +88,18 @@ async def verify_code(req: VerifyCodeRequest, db: AsyncSession = Depends(get_db)
 @router.post("/verify-2fa", response_model=Verify2FAResponse)
 async def verify_2fa(req: Verify2FARequest, db: AsyncSession = Depends(get_db)):
     try:
-        token = await telegram_manager.verify_2fa(req.phone, req.password, db)
-        return Verify2FAResponse(token=token)
+        token, has_openai_key = await telegram_manager.verify_2fa(req.phone, req.password, db)
+        return Verify2FAResponse(token=token, has_openai_key=has_openai_key)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/api-key", response_model=SaveApiKeyResponse)
+async def save_api_key(
+    req: SaveApiKeyRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    user.openai_api_key_encrypted = encrypt_session(req.api_key)
+    await db.commit()
+    return SaveApiKeyResponse()

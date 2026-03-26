@@ -85,6 +85,11 @@ async def _process_task(
                 config.permission_level if config else "read_only"
             )
 
+            # Decrypt user's OpenAI API key
+            openai_api_key: str | None = None
+            if user.openai_api_key_encrypted:
+                openai_api_key = decrypt_session(user.openai_api_key_encrypted)
+
         # Restore a temporary Telegram client
         client = await _restore_client(user)
         if client is None:
@@ -115,6 +120,7 @@ async def _process_task(
                 client=client,
                 conversation_id=conversation_id,
                 send=send,
+                openai_api_key=openai_api_key,
             )
         except Exception:
             logger.exception("Agent failed for task %s", request_id)
