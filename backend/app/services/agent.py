@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import uuid
+from collections.abc import Callable, Awaitable
 from datetime import datetime, timezone
 
 from openai import AsyncOpenAI
@@ -14,7 +15,9 @@ from app.agent.registry import registry
 from app.config import settings
 from app.database import async_session
 from app.models.conversation import Conversation, ConversationMessage
-from app.services.ws_manager import ws_manager
+
+# Type alias for the send callback: (user_id, message_json) -> None
+SendFn = Callable[[uuid.UUID, str], Awaitable[None]]
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +58,7 @@ async def _generate_title(
     user_id: uuid.UUID,
     conversation_id: uuid.UUID,
     first_message: str,
+    send: SendFn,
 ) -> None:
     try:
         response = await openai_client.chat.completions.create(
@@ -77,7 +81,7 @@ async def _generate_title(
                 conv.title = title
                 await db.commit()
 
-        await ws_manager.send(
+        await send(
             user_id,
             json.dumps({
                 "type": "conversation_title_updated",
@@ -144,6 +148,7 @@ async def run_agent(
     permission_level: PermissionLevel,
     client: TelegramClient,
     conversation_id: uuid.UUID,
+    send: SendFn,
 ):
     # Ensure tools are imported
     import app.agent.tools  # noqa: F401
@@ -160,7 +165,7 @@ async def run_agent(
 
     # Auto-title on first message
     if is_first_message:
-        asyncio.create_task(_generate_title(user_id, conversation_id, prompt))
+        asyncio.create_task(_generate_title(user_id, conversation_id, prompt, send))
 
     for _ in range(10):  # Max iterations for the agentic loop
         response = await openai_client.chat.completions.create(
@@ -176,7 +181,7 @@ async def run_agent(
             await _persist_message(conversation_id, "assistant", content)
             await _update_conversation_timestamp(conversation_id)
 
-            await ws_manager.send(
+            await send(
                 user_id,
                 json.dumps({
                     "type": "agent_response",
@@ -199,7 +204,7 @@ async def run_agent(
             fn_name = tool_call.function.name
             fn_args = json.loads(tool_call.function.arguments)
 
-            await ws_manager.send(
+            await send(
                 user_id,
                 json.dumps({
                     "type": "agent_tool_execution",
@@ -217,7 +222,7 @@ async def run_agent(
                 conversation_id, "tool", json.dumps(result), tool_call_id=tool_call.id
             )
 
-            await ws_manager.send(
+            await send(
                 user_id,
                 json.dumps({
                     "type": "agent_tool_execution",
@@ -240,7 +245,7 @@ async def run_agent(
     await _persist_message(conversation_id, "assistant", exhaust_msg)
     await _update_conversation_timestamp(conversation_id)
 
-    await ws_manager.send(
+    await send(
         user_id,
         json.dumps({
             "type": "agent_response",

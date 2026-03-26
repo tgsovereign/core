@@ -11,14 +11,14 @@ Sovereign.
 - A Telegram API ID & hash from <https://my.telegram.org>
 - An OpenAI API key
 
-## 1. Start Postgres
+## 1. Start Postgres & RabbitMQ
 
 ```bash
-docker compose up postgres -d
+docker compose up postgres rabbitmq -d
 ```
 
-This runs Postgres 17 on `localhost:5432` with user/password/db all set to
-`sovereign`.
+This runs Postgres 17 on `localhost:5432` and RabbitMQ on `localhost:5672`
+(management UI at `localhost:15672`, guest/guest).
 
 ## 2. Backend
 
@@ -37,6 +37,7 @@ Required `.env` values:
 | `JWT_SECRET`             | Any random string                                                           |
 | `SESSION_ENCRYPTION_KEY` | Generate with the command in `.env.example`                                 |
 | `DATABASE_URL`           | Defaults to local Postgres (`sovereign:sovereign@localhost:5432/sovereign`) |
+| `RABBITMQ_URL`           | Defaults to local RabbitMQ (`amqp://guest:guest@localhost:5672/`)           |
 
 Run database migrations and start the server:
 
@@ -47,7 +48,21 @@ uv run uvicorn app.main:app --reload --port 8000
 
 The API is available at <http://localhost:8000>.
 
-## 3. Frontend
+## 3. Helper
+
+The helper service processes agent tasks (AI calls + Telegram tool execution)
+via a RabbitMQ work queue. In a separate terminal:
+
+```bash
+cd backend
+uv run python -m app.helper
+```
+
+The helper shares the same `.env` as the backend. Each helper processes up to
+`PREFETCH_COUNT` tasks concurrently (default `8`). You can run multiple helpers
+in parallel — they compete for tasks from the same queue.
+
+## 4. Frontend
 
 ```bash
 cd frontend

@@ -1,4 +1,3 @@
-import asyncio
 import json
 import logging
 import uuid
@@ -6,12 +5,11 @@ import uuid
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 
-from app.agent.permissions import PermissionLevel
 from app.database import async_session
-from app.models.agent_config import AgentConfig
 from app.models.user import User
-from app.services.agent import run_agent
+from app.routers import _state as router_state
 from app.services.auth import decode_token
+from app.services.rabbitmq import publish_task
 from app.services.telegram import telegram_manager
 from app.services.ws_manager import ws_manager
 from app.telegram.event_handler import register_event_handlers
@@ -73,22 +71,19 @@ async def websocket_endpoint(websocket: WebSocket, token: str | None = None):
                     }))
                     continue
 
-                conversation_id = uuid.UUID(conversation_id_str)
+                if router_state.rmq_channel is None:
+                    await websocket.send_text(json.dumps({
+                        "type": "error",
+                        "detail": "Task queue unavailable",
+                    }))
+                    continue
 
-                # Get permission level
-                async with async_session() as db:
-                    stmt = select(AgentConfig).where(AgentConfig.user_id == user_id)
-                    result = await db.execute(stmt)
-                    config = result.scalar_one_or_none()
-                    level = PermissionLevel.from_string(
-                        config.permission_level if config else "read_only"
-                    )
-
-                client = telegram_manager.get_client(user_id)
-                if client:
-                    asyncio.create_task(
-                        run_agent(user_id, request_id, prompt, level, client, conversation_id)
-                    )
+                await publish_task(router_state.rmq_channel, {
+                    "user_id": str(user_id),
+                    "request_id": request_id,
+                    "prompt": prompt,
+                    "conversation_id": conversation_id_str,
+                })
 
             elif msg_type == "mark_read":
                 chat_id = msg.get("chat_id")
