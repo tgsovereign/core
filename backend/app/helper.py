@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import signal
 import uuid
 
 import aio_pika
@@ -13,7 +14,7 @@ from telethon.sessions import StringSession
 
 from app.agent.permissions import PermissionLevel
 from app.config import settings
-from app.database import async_session
+from app.database import async_session, engine
 from app.models.agent_config import AgentConfig
 from app.models.user import User
 from app.services.agent import run_agent
@@ -135,6 +136,14 @@ async def main() -> None:
     logger.info("Helper starting...")
 
     prefetch_count = int(os.environ.get("PREFETCH_COUNT") or 8)
+    shutdown_timeout = int(os.environ.get("SHUTDOWN_TIMEOUT") or 30)
+
+    shutdown_event = asyncio.Event()
+    in_flight: set[asyncio.Task] = set()
+
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(sig, shutdown_event.set)
 
     connection = await get_connection()
     channel = await connection.channel()
@@ -144,9 +153,41 @@ async def main() -> None:
 
     logger.info("Helper ready — consuming from %s (prefetch=%d)", TASK_QUEUE, prefetch_count)
 
-    async with queue.iterator() as queue_iter:
-        async for message in queue_iter:
-            asyncio.create_task(_process_task(message, ws_exchange))
+    async def _consume() -> None:
+        async with queue.iterator() as queue_iter:
+            async for message in queue_iter:
+                task = asyncio.create_task(_process_task(message, ws_exchange))
+                in_flight.add(task)
+                task.add_done_callback(in_flight.discard)
+
+    consume_task = asyncio.create_task(_consume())
+
+    # Block until shutdown signal
+    await shutdown_event.wait()
+    logger.info("Shutdown signal received — stopping consumer...")
+
+    # Stop consuming new messages
+    consume_task.cancel()
+    try:
+        await consume_task
+    except asyncio.CancelledError:
+        pass
+
+    # Wait for in-flight tasks to finish
+    if in_flight:
+        logger.info("Waiting for %d in-flight tasks (timeout=%ds)...", len(in_flight), shutdown_timeout)
+        _done, pending = await asyncio.wait(in_flight, timeout=shutdown_timeout)
+        if pending:
+            logger.warning("Cancelling %d tasks that did not finish in time", len(pending))
+            for t in pending:
+                t.cancel()
+            await asyncio.wait(pending, timeout=5)
+
+    # Clean up connections
+    await channel.close()
+    await connection.close()
+    await engine.dispose()
+    logger.info("Helper shut down.")
 
 
 if __name__ == "__main__":

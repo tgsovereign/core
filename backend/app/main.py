@@ -4,10 +4,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database import engine
 from app.routers import auth, chats, agent, conversations, ws
 from app.routers import _state as router_state
 from app.services.rabbitmq import get_connection, declare_infrastructure
 from app.services.telegram import telegram_manager
+from app.services.ws_manager import ws_manager
 from app.services.ws_relay import start_ws_relay
 
 logging.basicConfig(level=logging.INFO)
@@ -28,10 +30,12 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     router_state.rmq_channel = None
+    await ws_manager.close_all()
     await channel.close()
     await rmq_conn.close()
     await relay_conn.close()
     await telegram_manager.disconnect_all()
+    await engine.dispose()
 
 
 app = FastAPI(title="Sovereign", version="0.1.0", lifespan=lifespan)

@@ -32,6 +32,16 @@ class WebSocketManager:
     async def send(self, user_id: uuid.UUID, message: str):
         await self.broadcast(user_id, message)
 
+    async def close_all(self):
+        """Close all WebSocket connections gracefully."""
+        for conns in self._connections.values():
+            for ws in conns:
+                try:
+                    await ws.close(code=1012, reason="Server shutting down")
+                except Exception:
+                    pass
+        self._connections.clear()
+
 
 # Singleton
 ws_manager = WebSocketManager()
