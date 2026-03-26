@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { clearToken, api } from "@/lib/api";
 import { SocketProvider } from "@/hooks/useSocket";
+import { useSwipeRight } from "@/hooks/useSwipeRight";
 import Image from "next/image";
 import { Menu } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +26,8 @@ export default function ChatLayout({
   const router = useRouter();
   const [user, setUser] = useState<TgUser | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const openSidebar = useCallback(() => setSidebarOpen(true), []);
+  useSwipeRight(openSidebar);
 
   useEffect(() => {
     api<TgUser>("/api/auth/me")
