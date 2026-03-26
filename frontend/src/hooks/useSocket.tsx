@@ -13,6 +13,9 @@ import { getToken } from "@/lib/api";
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000";
 
+const RECONNECT_BASE_MS = 1_000;
+const RECONNECT_MAX_MS = 30_000;
+
 export type WsMessage =
   | {
       type: "agent_response";
@@ -52,28 +55,59 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const wsRef = useRef<WebSocket | null>(null);
   const listenersRef = useRef<Set<Listener>>(new Set());
   const [connected, setConnected] = useState(false);
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retriesRef = useRef(0);
+  const unmountedRef = useRef(false);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
+    unmountedRef.current = false;
 
-    const ws = new WebSocket(`${WS_BASE}/api/ws?token=${token}`);
-    wsRef.current = ws;
+    function connect() {
+      const token = getToken();
+      if (!token || unmountedRef.current) return;
 
-    ws.onopen = () => setConnected(true);
-    ws.onclose = () => setConnected(false);
+      const ws = new WebSocket(`${WS_BASE}/api/ws?token=${token}`);
+      wsRef.current = ws;
 
-    ws.onmessage = (event) => {
-      try {
-        const msg: WsMessage = JSON.parse(event.data);
-        listenersRef.current.forEach((fn) => fn(msg));
-      } catch {
-        // ignore non-JSON messages
-      }
-    };
+      ws.onopen = () => {
+        retriesRef.current = 0;
+        setConnected(true);
+      };
+
+      ws.onclose = () => {
+        setConnected(false);
+        wsRef.current = null;
+        scheduleReconnect();
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg: WsMessage = JSON.parse(event.data);
+          listenersRef.current.forEach((fn) => fn(msg));
+        } catch {
+          // ignore non-JSON messages
+        }
+      };
+    }
+
+    function scheduleReconnect() {
+      if (unmountedRef.current) return;
+
+      const delay = Math.min(
+        RECONNECT_BASE_MS * 2 ** retriesRef.current,
+        RECONNECT_MAX_MS,
+      );
+      retriesRef.current += 1;
+
+      reconnectTimer.current = setTimeout(connect, delay);
+    }
+
+    connect();
 
     return () => {
-      ws.close();
+      unmountedRef.current = true;
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      wsRef.current?.close();
       wsRef.current = null;
       setConnected(false);
     };

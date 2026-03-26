@@ -62,7 +62,7 @@ async def _generate_title(
 ) -> None:
     try:
         response = await openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-nano",
             messages=[
                 {
                     "role": "system",
@@ -169,7 +169,7 @@ async def run_agent(
 
     for _ in range(10):  # Max iterations for the agentic loop
         response = await openai_client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             messages=messages,
             tools=tools if tools else None,
         )
