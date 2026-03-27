@@ -12,8 +12,18 @@ import {
   Shield,
   ShieldCheck,
   ShieldAlert,
+  MessageCircle,
+  Pencil,
+  Trash2,
+  UserPlus,
+  UserMinus,
+  Filter,
+  Hash,
+  User,
+  Regex,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +34,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -176,8 +191,12 @@ export default function NewAgentDialog({
   const [scheduleFrequency, setScheduleFrequency] = useState<"minutes" | "hours" | "days">("hours");
   const [scheduleInterval, setScheduleInterval] = useState("1");
   const [scheduleTime, setScheduleTime] = useState("09:00");
-  const [scheduledAt, setScheduledAt] = useState("");
-  const [eventType, setEventType] = useState("message_received");
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
+  const [scheduledTime, setScheduledTime] = useState("12:00");
+  const [eventName, setEventName] = useState("new_message");
+  const [eventFilterChats, setEventFilterChats] = useState("");
+  const [eventFilterFromUser, setEventFilterFromUser] = useState("");
+  const [eventFilterPattern, setEventFilterPattern] = useState("");
   const [permissionLevel, setPermissionLevel] = useState("read_only");
 
   // Step 2: System prompt
@@ -202,8 +221,12 @@ export default function NewAgentDialog({
     setScheduleFrequency("hours");
     setScheduleInterval("1");
     setScheduleTime("09:00");
-    setScheduledAt("");
-    setEventType("message_received");
+    setScheduledDate(undefined);
+    setScheduledTime("12:00");
+    setEventName("new_message");
+    setEventFilterChats("");
+    setEventFilterFromUser("");
+    setEventFilterPattern("");
     setPermissionLevel("read_only");
     setSystemPrompt("");
     setTelegramStep("phone");
@@ -262,8 +285,25 @@ export default function NewAgentDialog({
         permission_level: permissionLevel,
       };
       if (taskType === "cron") input.cron_expression = buildCronExpression();
-      if (taskType === "one_off") input.scheduled_at = scheduledAt;
-      if (taskType === "event_driven") input.event_type = eventType;
+      if (taskType === "one_off" && scheduledDate) {
+        const [h, m] = scheduledTime.split(":").map(Number);
+        const dt = new Date(scheduledDate);
+        dt.setHours(h, m, 0, 0);
+        input.scheduled_at = dt.toISOString();
+      }
+      if (taskType === "event_driven") {
+        const filters: Record<string, unknown> = {};
+        if (eventFilterChats.trim()) {
+          filters.chats = eventFilterChats.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+        if (eventFilterFromUser.trim()) {
+          filters.from_user = eventFilterFromUser.trim();
+        }
+        if (eventFilterPattern.trim()) {
+          filters.pattern = eventFilterPattern.trim();
+        }
+        input.event_config = { event: eventName, filters };
+      }
 
       const task = await createAgentTask(input);
       setCreatedTask(task);
@@ -332,8 +372,8 @@ export default function NewAgentDialog({
     (taskType === "cron"
       ? parseInt(scheduleInterval, 10) > 0
       : taskType === "one_off"
-        ? scheduledAt
-        : eventType);
+        ? scheduledDate
+        : eventName);
 
   const stepConfig: Record<WizardStep, { title: string; description: string }> =
     {
@@ -360,7 +400,7 @@ export default function NewAgentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
@@ -456,30 +496,153 @@ export default function NewAgentDialog({
             )}
 
             {taskType === "one_off" && (
-              <div className="grid gap-2">
-                <Label htmlFor="scheduled-at">Run at</Label>
-                <Input
-                  id="scheduled-at"
-                  type="datetime-local"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
-                />
+              <div className="grid gap-3">
+                <Label>Run at</Label>
+                <div className="rounded-lg border border-border/40 bg-card/30 overflow-hidden">
+                  <div className="flex items-center divide-x divide-border/30">
+                    {/* Date picker */}
+                    <Popover>
+                      <PopoverTrigger
+                        className={cn(
+                          "flex flex-1 items-center gap-2.5 px-3 h-10 text-sm transition-colors hover:bg-accent/30 focus-visible:outline-none focus-visible:bg-accent/30",
+                          !scheduledDate && "text-muted-foreground",
+                        )}
+                      >
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-400/10">
+                          <CalendarClock className="h-3.5 w-3.5 text-sky-400" />
+                        </div>
+                        <span>
+                          {scheduledDate
+                            ? scheduledDate.toLocaleDateString(undefined, {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "Pick a date"}
+                        </span>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={scheduledDate}
+                          onSelect={setScheduledDate}
+                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {/* Time picker */}
+                    <div className="flex items-center gap-2.5 px-3 h-10">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-400/10">
+                        <Clock className="h-3.5 w-3.5 text-violet-400" />
+                      </div>
+                      <input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                        className="bg-transparent text-sm text-foreground outline-none [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 [&::-webkit-calendar-picker-indicator]:hover:opacity-80"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
             {taskType === "event_driven" && (
-              <div className="grid gap-2">
-                <Label>Event type</Label>
-                <Select value={eventType} onValueChange={(v) => v && setEventType(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="message_received">
-                      Message received
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid gap-3">
+                {/* Event type picker */}
+                <Label>Trigger event</Label>
+                {(() => {
+                  const EVENT_OPTIONS = [
+                    { value: "new_message", label: "New message", desc: "When a message is received", icon: MessageCircle, color: "text-sky-400", bg: "bg-sky-400/10" },
+                    { value: "message_edited", label: "Message edited", desc: "When a message is modified", icon: Pencil, color: "text-amber-400", bg: "bg-amber-400/10" },
+                    { value: "message_deleted", label: "Message deleted", desc: "When a message is removed", icon: Trash2, color: "text-red-400", bg: "bg-red-400/10" },
+                    { value: "user_joined", label: "User joined", desc: "When someone enters a chat", icon: UserPlus, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+                    { value: "user_left", label: "User left", desc: "When someone leaves a chat", icon: UserMinus, color: "text-orange-400", bg: "bg-orange-400/10" },
+                  ] as const;
+                  const selected = EVENT_OPTIONS.find((e) => e.value === eventName) ?? EVENT_OPTIONS[0];
+                  const SelectedIcon = selected.icon;
+                  return (
+                    <Select value={eventName} onValueChange={(v) => v && setEventName(v)}>
+                      <SelectTrigger className="h-10 w-full">
+                        <span className="flex items-center gap-2.5">
+                          <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md", selected.bg)}>
+                            <SelectedIcon className={cn("h-3.5 w-3.5", selected.color)} />
+                          </span>
+                          <span className="text-sm">{selected.label}</span>
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent className="w-[--radix-select-trigger-width]">
+                        {EVENT_OPTIONS.map((evt) => {
+                          const Icon = evt.icon;
+                          return (
+                            <SelectItem key={evt.value} value={evt.value}>
+                              <span className="flex items-center gap-2.5">
+                                <span className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded-md", evt.bg)}>
+                                  <Icon className={cn("h-3.5 w-3.5", evt.color)} />
+                                </span>
+                                <span className="flex flex-col">
+                                  <span className="text-sm font-medium">{evt.label}</span>
+                                  <span className="text-[11px] text-muted-foreground">{evt.desc}</span>
+                                </span>
+                              </span>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  );
+                })()}
+
+                {/* Filters — collapsible section */}
+                <div className="mt-1 rounded-lg border border-border/40 bg-card/30">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-border/30">
+                    <Filter className="h-3 w-3 text-muted-foreground/60" />
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium">Filters</span>
+                    <span className="text-[10px] text-muted-foreground/40 ml-auto">optional</span>
+                  </div>
+                  <div className="grid gap-2.5 px-3 py-2.5">
+                    {/* Chat ID filter */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted/40">
+                        <Hash className="h-3 w-3 text-muted-foreground/70" />
+                      </div>
+                      <Input
+                        value={eventFilterChats}
+                        onChange={(e) => setEventFilterChats(e.target.value)}
+                        placeholder="Chat IDs or @usernames"
+                        className="h-7 text-xs bg-transparent border-border/40 placeholder:text-muted-foreground/30"
+                      />
+                    </div>
+
+                    {/* From user filter */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted/40">
+                        <User className="h-3 w-3 text-muted-foreground/70" />
+                      </div>
+                      <Input
+                        value={eventFilterFromUser ?? ""}
+                        onChange={(e) => setEventFilterFromUser(e.target.value)}
+                        placeholder="From user ID or @username"
+                        className="h-7 text-xs bg-transparent border-border/40 placeholder:text-muted-foreground/30"
+                      />
+                    </div>
+
+                    {/* Regex pattern — only for message events */}
+                    {(eventName === "new_message" || eventName === "message_edited") && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted/40">
+                          <Regex className="h-3 w-3 text-muted-foreground/70" />
+                        </div>
+                        <Input
+                          value={eventFilterPattern}
+                          onChange={(e) => setEventFilterPattern(e.target.value)}
+                          placeholder="Regex pattern e.g. ^/start|hello"
+                          className="h-7 text-xs font-mono bg-transparent border-border/40 placeholder:text-muted-foreground/30"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
