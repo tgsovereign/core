@@ -12,6 +12,13 @@ import {
   ChevronRight,
   ExternalLink,
   Loader2,
+  Clock,
+  CalendarClock,
+  MessageSquare,
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -23,6 +30,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
 import {
   Tooltip,
   TooltipContent,
@@ -77,6 +91,40 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+const AGENT_TYPE_ICON: Record<
+  string,
+  { icon: typeof Clock; color: string; bg: string }
+> = {
+  cron: { icon: Clock, color: "text-violet-400", bg: "bg-violet-400/10" },
+  one_off: { icon: CalendarClock, color: "text-sky-400", bg: "bg-sky-400/10" },
+  event_driven: {
+    icon: MessageSquare,
+    color: "text-amber-400",
+    bg: "bg-amber-400/10",
+  },
+};
+
+const PERM_ICON: Record<
+  string,
+  { icon: typeof Shield; color: string; bg: string }
+> = {
+  read_only: {
+    icon: Shield,
+    color: "text-muted-foreground",
+    bg: "bg-muted/40",
+  },
+  read_write: {
+    icon: ShieldCheck,
+    color: "text-emerald-400",
+    bg: "bg-emerald-400/10",
+  },
+  full_autonomy: {
+    icon: ShieldAlert,
+    color: "text-orange-400",
+    bg: "bg-orange-400/10",
+  },
+};
+
 function SidebarItem({
   id,
   title,
@@ -85,6 +133,8 @@ function SidebarItem({
   onNavigate,
   onDelete,
   navigatePath,
+  badge,
+  dimmed,
 }: {
   id: string;
   title: string;
@@ -93,20 +143,33 @@ function SidebarItem({
   onNavigate: (path: string) => void;
   onDelete: (e: React.MouseEvent, id: string) => void;
   navigatePath: string;
+  badge?: { icon: typeof Clock; color: string; bg: string };
+  dimmed?: boolean;
 }) {
+  const BadgeIcon = badge?.icon;
   return (
     <div
       onClick={() => onNavigate(navigatePath)}
       className={cn(
-        "group flex cursor-pointer items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
+        "group flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
         activeId === id
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
       )}
     >
+      {BadgeIcon && (
+        <div
+          className={cn(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-md",
+            badge.bg,
+          )}
+        >
+          <BadgeIcon className={cn("h-3.5 w-3.5", badge.color)} />
+        </div>
+      )}
       <div className="min-w-0 flex-1">
-        <p className="truncate">{title}</p>
-        <p className="text-xs text-muted-foreground/60">
+        <p className={cn("truncate", dimmed && "opacity-50")}>{title}</p>
+        <p className="text-[11px] text-muted-foreground/50">
           {timeAgo(updatedAt)}
         </p>
       </div>
@@ -153,7 +216,9 @@ function InfiniteScrollSentinel({
 
   return (
     <div ref={sentinelRef} className="flex justify-center py-2">
-      {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+      {loading && (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      )}
     </div>
   );
 }
@@ -338,7 +403,7 @@ export default function Sidebar({
       <ScrollArea className="flex-1 min-h-0">
         <div className="p-2 space-y-1">
           {/* Agents section */}
-          {agentsEnabled && (
+          {agentsEnabled ? (
             <Collapsible open={agentsOpen} onOpenChange={setAgentsOpen}>
               <CollapsibleTrigger className="flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-sidebar-accent/50 transition-colors cursor-pointer">
                 <ChevronRight
@@ -364,6 +429,8 @@ export default function Sidebar({
                       onNavigate={navigate}
                       onDelete={handleDeleteAgent}
                       navigatePath={`/chat/agent/${task.id}`}
+                      badge={AGENT_TYPE_ICON[task.task_type]}
+                      dimmed={!task.enabled}
                     />
                   ))}
                   <InfiniteScrollSentinel
@@ -374,6 +441,32 @@ export default function Sidebar({
                 </div>
               </CollapsibleContent>
             </Collapsible>
+          ) : (
+            <div className="mx-1 mb-2 overflow-hidden rounded-lg border border-border/40 bg-gradient-to-b from-violet-500/[0.03] to-transparent">
+              <Empty className="border-0 p-4 gap-2.5">
+                <EmptyHeader className="gap-1.5">
+                  <EmptyMedia
+                    variant="icon"
+                    className="bg-violet-500/10 text-violet-400"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </EmptyMedia>
+                  <EmptyTitle className="text-xs">Cloud Agents</EmptyTitle>
+                  <EmptyDescription className="text-[11px] leading-relaxed">
+                    Autonomous agents that run on a schedule or react to
+                    Telegram events — available on{" "}
+                    <a
+                      href="https://web.tgsovereign.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                    >
+                      Sovereign Cloud
+                    </a>
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </div>
           )}
 
           {/* Chats section */}
@@ -402,6 +495,7 @@ export default function Sidebar({
                     onNavigate={navigate}
                     onDelete={handleDeleteConversation}
                     navigatePath={`/chat/${conv.id}`}
+                    badge={PERM_ICON[conv.permission_level]}
                   />
                 ))}
                 <InfiniteScrollSentinel
@@ -441,7 +535,11 @@ export default function Sidebar({
           </div>
           <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent side={isMobile ? "top" : "right"} align="end" sideOffset={4}>
+        <DropdownMenuContent
+          side={isMobile ? "top" : "right"}
+          align="end"
+          sideOffset={4}
+        >
           <DropdownMenuGroup>
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-3 px-2 py-1.5 text-left text-sm">
@@ -482,7 +580,6 @@ export default function Sidebar({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
     </aside>
   );
 
