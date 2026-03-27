@@ -20,9 +20,12 @@ function storedToMessages(stored: StoredMessage[]): Message[] {
       if (m.tool_calls && m.tool_calls.length > 0 && !m.content) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const tools: ToolCall[] = m.tool_calls.map((tc: any) => ({
-          tool: (tc as { function?: { name?: string } }).function?.name ?? "unknown",
+          tool:
+            (tc as { function?: { name?: string } }).function?.name ??
+            "unknown",
           arguments: JSON.parse(
-            (tc as { function?: { arguments?: string } }).function?.arguments ?? "{}",
+            (tc as { function?: { arguments?: string } }).function?.arguments ??
+              "{}",
           ),
           status: "done" as const,
         }));
@@ -79,7 +82,8 @@ export default function ConversationPage({
                 {
                   id: "greeting",
                   role: "assistant",
-                  content: "Hello! I'm your Sovereign assistant. How can I help you today?",
+                  content:
+                    "Hello! I'm your Sovereign assistant. How can I help you today?",
                 },
               ],
         );
@@ -88,60 +92,57 @@ export default function ConversationPage({
   }, [id]);
 
   // Handle incoming WS messages
-  const handleWs = useCallback(
-    (msg: WsMessage) => {
-      if (msg.type === "conversation_title_updated") return;
+  const handleWs = useCallback((msg: WsMessage) => {
+    if (msg.type === "conversation_title_updated") return;
 
-      const rid = msg.request_id;
-      if (rid !== pendingRef.current) return;
+    const rid = msg.request_id;
+    if (rid !== pendingRef.current) return;
 
-      if (msg.type === "agent_tool_execution") {
-        const tc: ToolCall = {
-          tool: msg.tool,
-          arguments: msg.arguments,
-          status: msg.status,
-        };
+    if (msg.type === "agent_tool_execution") {
+      const tc: ToolCall = {
+        tool: msg.tool,
+        arguments: msg.arguments,
+        status: msg.status,
+      };
 
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          if (last && last.role === "assistant" && last.id === rid) {
-            const tools = [...(last.tools ?? [])];
-            const existing = tools.findIndex(
-              (t) =>
-                t.tool === tc.tool &&
-                JSON.stringify(t.arguments) === JSON.stringify(tc.arguments),
-            );
-            if (existing >= 0) {
-              tools[existing] = tc;
-            } else {
-              tools.push(tc);
-            }
-            return [...prev.slice(0, -1), { ...last, tools }];
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === "assistant" && last.id === rid) {
+          const tools = [...(last.tools ?? [])];
+          const existing = tools.findIndex(
+            (t) =>
+              t.tool === tc.tool &&
+              JSON.stringify(t.arguments) === JSON.stringify(tc.arguments),
+          );
+          if (existing >= 0) {
+            tools[existing] = tc;
+          } else {
+            tools.push(tc);
           }
-          return [
-            ...prev,
-            { id: rid, role: "assistant" as const, content: "", tools: [tc] },
-          ];
-        });
-      }
+          return [...prev.slice(0, -1), { ...last, tools }];
+        }
+        return [
+          ...prev,
+          { id: rid, role: "assistant" as const, content: "", tools: [tc] },
+        ];
+      });
+    }
 
-      if (msg.type === "agent_response" && msg.done) {
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          if (last && last.role === "assistant" && last.id === rid) {
-            return [...prev.slice(0, -1), { ...last, content: msg.content }];
-          }
-          return [
-            ...prev,
-            { id: rid, role: "assistant" as const, content: msg.content },
-          ];
-        });
-        pendingRef.current = null;
-        setBusy(false);
-      }
-    },
-    [],
-  );
+    if (msg.type === "agent_response" && msg.done) {
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === "assistant" && last.id === rid) {
+          return [...prev.slice(0, -1), { ...last, content: msg.content }];
+        }
+        return [
+          ...prev,
+          { id: rid, role: "assistant" as const, content: msg.content },
+        ];
+      });
+      pendingRef.current = null;
+      setBusy(false);
+    }
+  }, []);
 
   useEffect(() => addListener(handleWs), [addListener, handleWs]);
 
@@ -192,7 +193,7 @@ export default function ConversationPage({
       <Separator className="max-sm:hidden" />
       <footer className="px-3 py-3.5 sm:px-6 max-sm:fixed max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:z-30 max-sm:p-3">
         <form
-          className="mx-auto flex max-w-3xl gap-2 max-sm:gap-1 liquid-glass max-sm:px-3 max-sm:py-1.5"
+          className="mx-auto flex max-w-3xl gap-2 max-sm:gap-1 liquid-glass max-sm:pl-1.5 max-sm:pr-3 max-sm:py-1.5"
           onSubmit={(e) => {
             e.preventDefault();
             handleSend();
