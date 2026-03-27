@@ -9,7 +9,6 @@ Sovereign.
 - [uv](https://docs.astral.sh/uv/) (Python package manager)
 - [Node.js](https://nodejs.org/) 20+ & npm
 - A Telegram API ID & hash from <https://my.telegram.org>
-- An OpenAI API key
 
 ## 1. Start Postgres & RabbitMQ
 
@@ -33,7 +32,6 @@ Required `.env` values:
 | ------------------------ | --------------------------------------------------------------------------- |
 | `TELEGRAM_API_ID`        | From <https://my.telegram.org>                                              |
 | `TELEGRAM_API_HASH`      | From <https://my.telegram.org>                                              |
-| `OPENAI_API_KEY`         | OpenAI API key                                                              |
 | `JWT_SECRET`             | Any random string                                                           |
 | `SESSION_ENCRYPTION_KEY` | Generate with the command in `.env.example`                                 |
 | `DATABASE_URL`           | Defaults to local Postgres (`sovereign:sovereign@localhost:5432/sovereign`) |

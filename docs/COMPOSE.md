@@ -10,7 +10,6 @@ reverse proxy.
 - A domain name with DNS pointed at your server's IP (e.g. `sovereign.example.com`)
 - [Docker](https://docs.docker.com/engine/install/) & Docker Compose installed
 - A Telegram API ID & hash from <https://my.telegram.org>
-- An OpenAI API key
 
 ## 1. Clone the Repository
 
@@ -32,7 +31,6 @@ Edit `.env` and fill in **all** required values:
 ```dotenv
 TELEGRAM_API_ID=your_api_id
 TELEGRAM_API_HASH=your_api_hash
-OPENAI_API_KEY=sk-...
 JWT_SECRET=some-long-random-string
 SESSION_ENCRYPTION_KEY=generate-with-command-below
 DATABASE_URL=postgresql+asyncpg://sovereign:sovereign@postgres:5432/sovereign

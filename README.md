@@ -23,6 +23,5 @@ This starts Postgres, the backend, and the frontend. The app is available at
 ## Prerequisites
 
 - A Telegram API ID & hash from <https://my.telegram.org>
-- An OpenAI API key
 
 See the individual guides above for full requirements.
