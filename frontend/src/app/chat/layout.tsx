@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, createContext, useContext, useRef } from "react";
+import { useEffect, useState, useCallback, createContext, useContext } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { clearToken, api } from "@/lib/api";
 import { SocketProvider } from "@/hooks/useSocket";

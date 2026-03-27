@@ -64,7 +64,7 @@ export default function ConversationPage({
   const [busy, setBusy] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pendingRef = useRef<string | null>(null);
-  const { send, addListener, connected } = useSocket();
+  const { send, addListener } = useSocket();
 
   // Load conversation messages
   useEffect(() => {
