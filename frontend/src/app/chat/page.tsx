@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import ChatMessage, { Message, ToolCall } from "@/components/ChatMessage";
 import { createConversation } from "@/lib/conversations";
 import { useSocket, WsMessage } from "@/hooks/useSocket";
+import { usePermission } from "./layout";
 
 export default function NewChatPage() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function NewChatPage() {
   const pendingRef = useRef<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const { send, addListener } = useSocket();
+  const { permissionLevel } = usePermission();
 
   const handleWs = useCallback(
     (msg: WsMessage) => {
@@ -100,7 +102,7 @@ export default function NewChatPage() {
     setInput("");
 
     try {
-      const conv = await createConversation();
+      const conv = await createConversation(permissionLevel);
       conversationIdRef.current = conv.id;
 
       const requestId = crypto.randomUUID();

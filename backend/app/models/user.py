@@ -21,9 +21,6 @@ class User(Base):
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
-    agent_config: Mapped["AgentConfig"] = relationship(
-        back_populates="user", uselist=False, cascade="all, delete-orphan"
-    )
     conversations: Mapped[list["Conversation"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )

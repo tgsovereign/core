@@ -18,6 +18,7 @@ class Conversation(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     title: Mapped[str] = mapped_column(String(255), default="New conversation")
+    permission_level: Mapped[str] = mapped_column(String(20), default="read_only")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

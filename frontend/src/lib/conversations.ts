@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 export type Conversation = {
   id: string;
   title: string;
+  permission_level: string;
   created_at: string;
   updated_at: string;
 };
@@ -24,8 +25,13 @@ export function listConversations(): Promise<Conversation[]> {
   return api<Conversation[]>("/api/conversations");
 }
 
-export function createConversation(): Promise<Conversation> {
-  return api<Conversation>("/api/conversations", { method: "POST" });
+export function createConversation(
+  permissionLevel: string = "read_only",
+): Promise<Conversation> {
+  return api<Conversation>("/api/conversations", {
+    method: "POST",
+    body: JSON.stringify({ permission_level: permissionLevel }),
+  });
 }
 
 export function getConversation(id: string): Promise<ConversationDetail> {
