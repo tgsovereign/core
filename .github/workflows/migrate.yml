@@ -1,0 +1,29 @@
+name: Run database migrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/alembic/**"
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - run: uv sync --frozen
+
+      - run: uv run alembic upgrade head
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TELEGRAM_API_ID: "0"
+          TELEGRAM_API_HASH: "placeholder"
+          JWT_SECRET: "placeholder"
+          SESSION_ENCRYPTION_KEY: "placeholder"

@@ -35,27 +35,59 @@ const LEVELS = [
   },
 ] as const;
 
-type Level = (typeof LEVELS)[number]["value"];
+export type Level = (typeof LEVELS)[number]["value"];
 
-export default function PermissionToggle() {
+export default function PermissionToggle({
+  conversationId,
+  onLevelChange,
+}: {
+  conversationId: string | null;
+  onLevelChange?: (level: Level) => void;
+}) {
   const [level, setLevel] = useState<Level>("read_only");
 
+  // Fetch permission level when conversationId changes
   useEffect(() => {
-    api<{ permission_level: Level }>("/api/agent/config")
-      .then((r) => setLevel(r.permission_level))
+    if (!conversationId) {
+      setLevel("read_only");
+      onLevelChange?.("read_only");
+      return;
+    }
+
+    api<{ permission_level: Level }>(
+      `/api/conversations/config?conversation_id=${conversationId}`,
+    )
+      .then((r) => {
+        setLevel(r.permission_level);
+        onLevelChange?.(r.permission_level);
+      })
       .catch(() => {});
-  }, []);
+  }, [conversationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleChange(newLevel: Level) {
     setLevel(newLevel);
+    onLevelChange?.(newLevel);
+
+    // If no conversation yet, just update local state (will be used at creation time)
+    if (!conversationId) return;
+
     try {
-      await api("/api/agent/config", {
+      await api("/api/conversations/config", {
         method: "PUT",
-        body: JSON.stringify({ permission_level: newLevel }),
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          permission_level: newLevel,
+        }),
       });
     } catch {
-      api<{ permission_level: Level }>("/api/agent/config")
-        .then((r) => setLevel(r.permission_level))
+      // Revert on error
+      api<{ permission_level: Level }>(
+        `/api/conversations/config?conversation_id=${conversationId}`,
+      )
+        .then((r) => {
+          setLevel(r.permission_level);
+          onLevelChange?.(r.permission_level);
+        })
         .catch(() => {});
     }
   }

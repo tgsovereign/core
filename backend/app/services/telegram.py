@@ -10,7 +10,6 @@ from telethon.sessions import StringSession
 
 from app.config import settings
 from app.models.user import User
-from app.models.agent_config import AgentConfig
 from app.telegram.session_store import encrypt_session, decrypt_session
 from app.telegram.event_handler import register_event_handlers
 
@@ -89,9 +88,6 @@ class TelegramClientManager:
         if user is None:
             user = User(phone_hash=ph, telegram_session_encrypted=encrypted)
             db.add(user)
-            await db.flush()
-            # Create default agent config
-            db.add(AgentConfig(user_id=user.id, permission_level="read_only"))
         else:
             user.telegram_session_encrypted = encrypted
 

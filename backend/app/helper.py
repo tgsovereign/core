@@ -15,7 +15,7 @@ from telethon.sessions import StringSession
 from app.agent.permissions import PermissionLevel
 from app.config import settings
 from app.database import async_session, engine
-from app.models.agent_config import AgentConfig
+from app.models.conversation import Conversation
 from app.models.user import User
 from app.services.agent import run_agent
 from app.services.rabbitmq import (
@@ -77,12 +77,12 @@ async def _process_task(
                 logger.error("User %s not found, dropping task", user_id)
                 return
 
-            config = (await db.execute(
-                select(AgentConfig).where(AgentConfig.user_id == user_id)
+            conv = (await db.execute(
+                select(Conversation).where(Conversation.id == conversation_id)
             )).scalar_one_or_none()
 
             level = PermissionLevel.from_string(
-                config.permission_level if config else "read_only"
+                conv.permission_level if conv else "read_only"
             )
 
             # Decrypt user's OpenAI API key
