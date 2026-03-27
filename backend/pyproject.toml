@@ -16,4 +16,5 @@ dependencies = [
     "telethon>=1.42.0",
     "uvicorn[standard]>=0.42.0",
     "aio-pika>=9.5.0",
+    "croniter>=6.2.2",
 ]

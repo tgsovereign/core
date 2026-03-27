@@ -48,6 +48,21 @@ class AgentTaskListOut(BaseModel):
     total: int
 
 
+class AgentTaskUpdateOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: uuid.UUID
+    role: str
+    content: str | None = None
+    tool_calls: dict | None = None
+    tool_call_id: str | None = None
+    created_at: datetime
+
+
+class AgentTaskDetailOut(AgentTaskOut):
+    updates: list[AgentTaskUpdateOut] = []
+
+
 # --- Agent Telegram auth schemas ---
 
 class AgentAuthSendCodeRequest(BaseModel):

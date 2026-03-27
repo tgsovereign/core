@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.agent_task import AgentTask
 from app.models.user import User
+from sqlalchemy.orm import selectinload
+
 from app.schemas.agent_task import (
     AgentAuthSendCodeRequest,
     AgentAuthSendCodeResponse,
@@ -15,9 +17,11 @@ from app.schemas.agent_task import (
     AgentAuthVerify2FARequest,
     AgentAuthVerify2FAResponse,
     AgentTaskCreate,
+    AgentTaskDetailOut,
     AgentTaskListOut,
     AgentTaskOut,
     AgentTaskUpdate,
+    AgentTaskUpdateOut,
 )
 from app.services.auth import get_current_user
 from app.services.telegram import telegram_manager
@@ -83,26 +87,57 @@ async def create_agent_task(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    from datetime import datetime, timezone
+    from croniter import croniter
+
     if body.permission_level not in VALID_PERMISSION_LEVELS:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid permission level. Must be one of: {VALID_PERMISSION_LEVELS}",
         )
-    task = AgentTask(user_id=user.id, **body.model_dump())
+
+    data = body.model_dump()
+
+    # For cron tasks, compute the next fire time
+    if body.task_type == "cron" and body.cron_expression:
+        try:
+            cron = croniter(body.cron_expression, datetime.now(timezone.utc))
+            data["scheduled_at"] = cron.get_next(datetime)
+        except (ValueError, KeyError) as e:
+            raise HTTPException(
+                status_code=400, detail=f"Invalid cron expression: {e}"
+            )
+
+    task = AgentTask(user_id=user.id, **data)
     db.add(task)
     await db.commit()
     await db.refresh(task)
     return _task_to_out(task)
 
 
-@router.get("/{task_id}", response_model=AgentTaskOut)
+@router.get("/{task_id}", response_model=AgentTaskDetailOut)
 async def get_agent_task(
     task_id: uuid.UUID,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    task = await _get_user_task(task_id, user, db)
-    return _task_to_out(task)
+    from app.models.agent_task import AgentTaskUpdate as AgentTaskUpdateModel
+
+    stmt = (
+        select(AgentTask)
+        .where(AgentTask.id == task_id, AgentTask.user_id == user.id)
+        .options(selectinload(AgentTask.updates))
+    )
+    result = await db.execute(stmt)
+    task = result.scalar_one_or_none()
+    if task is None:
+        raise HTTPException(status_code=404, detail="Agent task not found")
+
+    out = _task_to_out(task)
+    return AgentTaskDetailOut(
+        **out.model_dump(),
+        updates=[AgentTaskUpdateOut.model_validate(u) for u in task.updates],
+    )
 
 
 @router.put("/{task_id}", response_model=AgentTaskOut)

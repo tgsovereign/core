@@ -27,6 +27,19 @@ export type CreateAgentTaskInput = {
   permission_level?: string;
 };
 
+export type AgentTaskUpdate = {
+  id: string;
+  role: "assistant" | "tool";
+  content: string | null;
+  tool_calls: Record<string, unknown> | null;
+  tool_call_id: string | null;
+  created_at: string;
+};
+
+export type AgentTaskDetail = AgentTask & {
+  updates: AgentTaskUpdate[];
+};
+
 export type AgentTaskPage = {
   items: AgentTask[];
   total: number;
@@ -52,8 +65,8 @@ export function createAgentTask(
   });
 }
 
-export function getAgentTask(id: string): Promise<AgentTask> {
-  return api<AgentTask>(`/api/agent-tasks/${id}`);
+export function getAgentTask(id: string): Promise<AgentTaskDetail> {
+  return api<AgentTaskDetail>(`/api/agent-tasks/${id}`);
 }
 
 export function updateAgentTask(

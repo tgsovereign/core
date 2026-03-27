@@ -174,8 +174,13 @@ export default function Sidebar({
   const isMobile = useIsMobile();
   const { addListener } = useSocket();
 
-  const activeId = pathname.startsWith("/chat/")
-    ? pathname.split("/chat/")[1]
+  const activeConvId =
+    pathname.startsWith("/chat/") && !pathname.startsWith("/chat/agent/")
+      ? pathname.split("/chat/")[1]
+      : null;
+
+  const activeAgentId = pathname.startsWith("/chat/agent/")
+    ? pathname.split("/chat/agent/")[1]
     : null;
 
   const agentsEnabled =
@@ -262,7 +267,7 @@ export default function Sidebar({
       await deleteConversation(id);
       setConversations((prev) => prev.filter((c) => c.id !== id));
       setConvTotal((prev) => prev - 1);
-      if (activeId === id) navigate("/chat");
+      if (activeConvId === id) navigate("/chat");
     } catch {
       // ignore
     }
@@ -274,6 +279,7 @@ export default function Sidebar({
       await deleteAgentTask(id);
       setAgentTasks((prev) => prev.filter((t) => t.id !== id));
       setAgentTotal((prev) => prev - 1);
+      if (activeAgentId === id) navigate("/chat");
     } catch {
       // ignore
     }
@@ -354,10 +360,10 @@ export default function Sidebar({
                       id={task.id}
                       title={task.name}
                       updatedAt={task.updated_at}
-                      activeId={null}
-                      onNavigate={() => {}}
+                      activeId={activeAgentId}
+                      onNavigate={navigate}
                       onDelete={handleDeleteAgent}
-                      navigatePath="#"
+                      navigatePath={`/chat/agent/${task.id}`}
                     />
                   ))}
                   <InfiniteScrollSentinel
@@ -392,7 +398,7 @@ export default function Sidebar({
                     id={conv.id}
                     title={conv.title}
                     updatedAt={conv.updated_at}
-                    activeId={activeId}
+                    activeId={activeConvId}
                     onNavigate={navigate}
                     onDelete={handleDeleteConversation}
                     navigatePath={`/chat/${conv.id}`}
@@ -477,6 +483,32 @@ export default function Sidebar({
         </DropdownMenuContent>
       </DropdownMenu>
 
+    </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop: static sidebar */}
+      <div className="hidden lg:block">{sidebarContent}</div>
+
+      {/* Mobile: overlay sidebar */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/50 transition-opacity duration-200 lg:hidden",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+        onClick={onClose}
+      />
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 transition-transform duration-200 ease-out lg:hidden",
+          open ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        {sidebarContent}
+      </div>
+
+      {/* Dialogs rendered once, outside sidebarContent */}
       <Dialog
         open={apiKeyOpen}
         onOpenChange={(open) => {
@@ -542,30 +574,6 @@ export default function Sidebar({
           }}
         />
       )}
-    </aside>
-  );
-
-  return (
-    <>
-      {/* Desktop: static sidebar */}
-      <div className="hidden lg:block">{sidebarContent}</div>
-
-      {/* Mobile: overlay sidebar */}
-      <div
-        className={cn(
-          "fixed inset-0 z-40 bg-black/50 transition-opacity duration-200 lg:hidden",
-          open ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-        onClick={onClose}
-      />
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 transition-transform duration-200 ease-out lg:hidden",
-          open ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        {sidebarContent}
-      </div>
     </>
   );
 }
