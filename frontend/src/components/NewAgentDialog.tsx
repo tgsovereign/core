@@ -36,6 +36,7 @@ import {
   type AgentTask,
   type AgentTaskType,
   createAgentTask,
+  deleteAgentTask,
   agentAuthSendCode,
   agentAuthVerifyCode,
   agentAuthVerify2FA,
@@ -44,6 +45,65 @@ import { cn } from "@/lib/utils";
 
 type WizardStep = "type" | "prompt" | "telegram" | "done";
 type TelegramStep = "phone" | "code" | "2fa";
+
+const STEPS: { key: WizardStep; label: string }[] = [
+  { key: "type", label: "Configure" },
+  { key: "prompt", label: "Instructions" },
+  { key: "telegram", label: "Telegram" },
+  { key: "done", label: "Done" },
+];
+
+function StepIndicator({ current }: { current: WizardStep }) {
+  const currentIdx = STEPS.findIndex((s) => s.key === current);
+
+  return (
+    <div className="flex items-center justify-between px-2">
+      {STEPS.map((s, i) => {
+        const isDone = i < currentIdx;
+        const isActive = i === currentIdx;
+
+        return (
+          <div key={s.key} className="flex items-center flex-1 last:flex-none">
+            {/* Circle */}
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-colors",
+                  isDone
+                    ? "bg-primary text-primary-foreground"
+                    : isActive
+                      ? "border-2 border-primary text-primary"
+                      : "border-2 border-muted-foreground/30 text-muted-foreground/50",
+                )}
+              >
+                {isDone ? <Check className="h-4 w-4" /> : i + 1}
+              </div>
+              <span
+                className={cn(
+                  "text-[10px]",
+                  isActive
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground/60",
+                )}
+              >
+                {s.label}
+              </span>
+            </div>
+            {/* Connector line */}
+            {i < STEPS.length - 1 && (
+              <div
+                className={cn(
+                  "mx-2 h-0.5 flex-1 -mt-4 rounded-full transition-colors",
+                  i < currentIdx ? "bg-primary" : "bg-muted-foreground/20",
+                )}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 const PERM_OPTIONS: {
   value: string;
@@ -156,8 +216,18 @@ export default function NewAgentDialog({
     setLoading(false);
   }
 
-  function handleOpenChange(nextOpen: boolean) {
-    if (!nextOpen) reset();
+  async function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      // If we created a task but never finished Telegram auth, clean it up
+      if (createdTask && step !== "done") {
+        try {
+          await deleteAgentTask(createdTask.id);
+        } catch {
+          // best-effort cleanup
+        }
+      }
+      reset();
+    }
     onOpenChange(nextOpen);
   }
 
@@ -298,6 +368,8 @@ export default function NewAgentDialog({
           </DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+
+        <StepIndicator current={step} />
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
