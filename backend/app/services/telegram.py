@@ -42,11 +42,11 @@ class TelegramClientManager:
 
     async def verify_code(
         self, phone: str, code: str, phone_code_hash: str, db: AsyncSession
-    ) -> tuple[str | None, bool]:
-        """Returns (jwt_token_or_none, needs_2fa).
+    ) -> tuple[str | None, bool, bool]:
+        """Returns (jwt_token_or_none, needs_2fa, has_openai_key).
 
-        If 2FA is needed, returns (None, True).
-        Otherwise returns (token, False).
+        If 2FA is needed, returns (None, True, False).
+        Otherwise returns (token, False, has_openai_key).
         """
         ph = phone_to_hash(phone)
         client = self._auth_clients.get(ph)
@@ -56,13 +56,15 @@ class TelegramClientManager:
         try:
             await client.sign_in(phone, code, phone_code_hash=phone_code_hash)
         except SessionPasswordNeededError:
-            return None, True
+            return None, True, False
 
-        return await self._finalize_auth(client, phone, db), False
+        token, has_key = await self._finalize_auth(client, phone, db)
+        return token, False, has_key
 
     async def verify_2fa(
         self, phone: str, password: str, db: AsyncSession
-    ) -> str:
+    ) -> tuple[str, bool]:
+        """Returns (jwt_token, has_openai_key)."""
         ph = phone_to_hash(phone)
         client = self._auth_clients.get(ph)
         if not client:
@@ -73,7 +75,8 @@ class TelegramClientManager:
 
     async def _finalize_auth(
         self, client: TelegramClient, phone: str, db: AsyncSession
-    ) -> str:
+    ) -> tuple[str, bool]:
+        """Returns (jwt_token, has_openai_key)."""
         ph = phone_to_hash(phone)
         session_str = client.session.save()
         encrypted = encrypt_session(session_str)
@@ -102,7 +105,8 @@ class TelegramClientManager:
         # Generate JWT
         from app.services.auth import create_token
 
-        return create_token(str(user.id))
+        has_openai_key = user.openai_api_key_encrypted is not None
+        return create_token(str(user.id)), has_openai_key
 
     async def restore_client(self, user: User, ws_manager=None) -> TelegramClient | None:
         if user.id in self._clients:

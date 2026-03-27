@@ -12,7 +12,6 @@ from telethon import TelegramClient
 from app.agent.executor import execute_tool
 from app.agent.permissions import PermissionLevel
 from app.agent.registry import registry
-from app.config import settings
 from app.database import async_session
 from app.models.conversation import Conversation, ConversationMessage
 
@@ -20,8 +19,6 @@ from app.models.conversation import Conversation, ConversationMessage
 SendFn = Callable[[uuid.UUID, str], Awaitable[None]]
 
 logger = logging.getLogger(__name__)
-
-openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
 
 SYSTEM_PROMPT = """You are Sovereign, an AI assistant with access to the user's Telegram account.
 
@@ -59,6 +56,7 @@ async def _generate_title(
     conversation_id: uuid.UUID,
     first_message: str,
     send: SendFn,
+    openai_client: AsyncOpenAI,
 ) -> None:
     try:
         response = await openai_client.chat.completions.create(
@@ -149,9 +147,15 @@ async def run_agent(
     client: TelegramClient,
     conversation_id: uuid.UUID,
     send: SendFn,
+    openai_api_key: str | None = None,
 ):
     # Ensure tools are imported
     import app.agent.tools  # noqa: F401
+
+    if not openai_api_key:
+        raise ValueError("No OpenAI API key configured. Please provide your API key.")
+
+    openai_client = AsyncOpenAI(api_key=openai_api_key)
 
     tools = registry.get_openai_tools(permission_level)
 
@@ -165,7 +169,7 @@ async def run_agent(
 
     # Auto-title on first message
     if is_first_message:
-        asyncio.create_task(_generate_title(user_id, conversation_id, prompt, send))
+        asyncio.create_task(_generate_title(user_id, conversation_id, prompt, send, openai_client))
 
     for _ in range(10):  # Max iterations for the agentic loop
         response = await openai_client.chat.completions.create(

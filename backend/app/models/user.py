@@ -16,6 +16,7 @@ class User(Base):
     )
     phone_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     telegram_session_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
+    openai_api_key_encrypted: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
