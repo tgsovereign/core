@@ -119,7 +119,7 @@ export default function NewChatPage() {
 
   return (
     <>
-      <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-6">
+      <main className="flex-1 overflow-y-auto px-3 py-4 sm:px-6 max-sm:pb-22">
         <div className="mx-auto flex max-w-3xl flex-col gap-3">
           {messages.map((msg) => (
             <ChatMessage key={msg.id} message={msg} />
@@ -134,10 +134,10 @@ export default function NewChatPage() {
         </div>
       </main>
 
-      <Separator />
-      <footer className="max-sm:p-0 px-3 py-3.5 sm:px-6">
+      <Separator className="max-sm:hidden" />
+      <footer className="px-3 py-3.5 sm:px-6 max-sm:fixed max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:z-30 max-sm:p-3">
         <form
-          className="mx-auto flex max-w-3xl gap-2 max-sm:gap-0"
+          className="mx-auto flex max-w-3xl gap-2 max-sm:gap-1 liquid-glass max-sm:pl-1.5 max-sm:pr-3 max-sm:py-1.5"
           onSubmit={(e) => {
             e.preventDefault();
             handleSend();
@@ -147,13 +147,13 @@ export default function NewChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 max-sm:border-0 max-sm:rounded-none max-sm:h-15 max-sm:px-4 max-sm:focus-visible:ring-0 max-sm:focus-visible:border-0"
+            className="flex-1 max-sm:border-0 max-sm:bg-transparent max-sm:rounded-full max-sm:h-11 max-sm:px-3 max-sm:focus-visible:ring-0 max-sm:focus-visible:border-0"
           />
           <Button
             type="submit"
             size="icon"
             disabled={!input.trim() || busy}
-            className="max-sm:bg-transparent max-sm:shadow-none max-sm:hover:bg-transparent max-sm:text-violet-400 max-sm:h-15 max-sm:w-15"
+            className="max-sm:bg-transparent max-sm:shadow-none max-sm:hover:bg-transparent max-sm:text-violet-400 max-sm:h-11 max-sm:w-11 max-sm:rounded-full"
           >
             <Send className="h-4 w-4 max-sm:fill-current" />
           </Button>
