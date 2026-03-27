@@ -2,6 +2,11 @@ import { api } from "@/lib/api";
 
 export type AgentTaskType = "one_off" | "cron" | "event_driven";
 
+export type EventConfig = {
+  event: string;
+  filters?: Record<string, unknown>;
+};
+
 export type AgentTask = {
   id: string;
   task_type: AgentTaskType;
@@ -9,7 +14,7 @@ export type AgentTask = {
   system_prompt: string;
   cron_expression: string | null;
   scheduled_at: string | null;
-  event_type: string | null;
+  event_config: EventConfig | null;
   permission_level: string;
   enabled: boolean;
   has_telegram_session: boolean;
@@ -23,7 +28,7 @@ export type CreateAgentTaskInput = {
   system_prompt: string;
   cron_expression?: string;
   scheduled_at?: string;
-  event_type?: string;
+  event_config?: EventConfig;
   permission_level?: string;
 };
 

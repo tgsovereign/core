@@ -14,7 +14,7 @@ class AgentTaskCreate(BaseModel):
     permission_level: str = "read_only"
     cron_expression: str | None = None
     scheduled_at: datetime | None = None
-    event_type: str | None = None
+    event_config: dict | None = None
 
 
 class AgentTaskUpdate(BaseModel):
@@ -23,7 +23,7 @@ class AgentTaskUpdate(BaseModel):
     permission_level: str | None = None
     cron_expression: str | None = None
     scheduled_at: datetime | None = None
-    event_type: str | None = None
+    event_config: dict | None = None
 
 
 class AgentTaskOut(BaseModel):
@@ -36,7 +36,7 @@ class AgentTaskOut(BaseModel):
     permission_level: str
     cron_expression: str | None = None
     scheduled_at: datetime | None = None
-    event_type: str | None = None
+    event_config: dict | None = None
     enabled: bool
     has_telegram_session: bool
     created_at: datetime

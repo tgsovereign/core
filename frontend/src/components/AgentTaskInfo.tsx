@@ -48,9 +48,9 @@ export default function AgentTaskInfo({ task }: { task: AgentTask }) {
           {task.cron_expression}
         </Badge>
       )}
-      {task.task_type === "event_driven" && task.event_type && (
+      {task.task_type === "event_driven" && task.event_config && (
         <Badge variant="outline" className="text-xs">
-          {task.event_type}
+          {(task.event_config.event ?? "unknown").replace(/_/g, " ")}
         </Badge>
       )}
       {task.task_type === "one_off" && task.scheduled_at && (

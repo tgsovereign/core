@@ -147,10 +147,33 @@ export default function AgentHeaderInfo({ agentId }: { agentId: string }) {
               </DetailRow>
             )}
 
-            {task.task_type === "event_driven" && task.event_type && (
-              <DetailRow icon={MessageSquare} label="Trigger">
-                {task.event_type.replace(/_/g, " ")}
-              </DetailRow>
+            {task.task_type === "event_driven" && task.event_config && (
+              <>
+                <DetailRow icon={MessageSquare} label="Trigger">
+                  {(task.event_config.event ?? "unknown").replace(/_/g, " ")}
+                </DetailRow>
+                {task.event_config.filters && Object.keys(task.event_config.filters).length > 0 && (() => {
+                  const f = task.event_config!.filters!;
+                  const chats = f.chats as string[] | undefined;
+                  const pattern = f.pattern as string | undefined;
+                  return (
+                    <DetailRow icon={Clock} label="Filters">
+                      <div className="flex flex-col gap-0.5">
+                        {chats && (
+                          <span>
+                            Chats: <span className="font-mono text-[10px] text-muted-foreground">{chats.join(", ")}</span>
+                          </span>
+                        )}
+                        {pattern && (
+                          <span>
+                            Pattern: <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">{pattern}</code>
+                          </span>
+                        )}
+                      </div>
+                    </DetailRow>
+                  );
+                })()}
+              </>
             )}
 
             {task.task_type === "one_off" && task.scheduled_at && (

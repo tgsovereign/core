@@ -40,7 +40,7 @@ def _task_to_out(task: AgentTask) -> AgentTaskOut:
         permission_level=task.permission_level,
         cron_expression=task.cron_expression,
         scheduled_at=task.scheduled_at,
-        event_type=task.event_type,
+        event_config=task.event_config,
         enabled=task.enabled,
         has_telegram_session=task.telegram_session_encrypted is not None,
         created_at=task.created_at,
