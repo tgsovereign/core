@@ -19,6 +19,22 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-perm-readonly: var(--perm-readonly);
+  --color-perm-readonly-bg: var(--perm-readonly-bg);
+  --color-perm-readwrite: var(--perm-readwrite);
+  --color-perm-readwrite-bg: var(--perm-readwrite-bg);
+  --color-perm-autonomy: var(--perm-autonomy);
+  --color-perm-autonomy-bg: var(--perm-autonomy-bg);
+  --color-agent-cron: var(--agent-cron);
+  --color-agent-cron-bg: var(--agent-cron-bg);
+  --color-agent-oneoff: var(--agent-oneoff);
+  --color-agent-oneoff-bg: var(--agent-oneoff-bg);
+  --color-agent-event: var(--agent-event);
+  --color-agent-event-bg: var(--agent-event-bg);
+  --color-avatar-user: var(--avatar-user);
+  --color-avatar-user-bg: var(--avatar-user-bg);
+  --color-avatar-assistant: var(--avatar-assistant);
+  --color-avatar-assistant-bg: var(--avatar-assistant-bg);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -98,6 +114,22 @@ a,
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --perm-readonly: oklch(0.556 0 0);
+  --perm-readonly-bg: oklch(0.556 0 0 / 15%);
+  --perm-readwrite: oklch(0.746 0.16 232.661);
+  --perm-readwrite-bg: oklch(0.685 0.169 237.323 / 15%);
+  --perm-autonomy: oklch(0.842 0.164 84.429);
+  --perm-autonomy-bg: oklch(0.769 0.188 70.08 / 15%);
+  --agent-cron: oklch(0.702 0.183 293.541);
+  --agent-cron-bg: oklch(0.702 0.183 293.541 / 10%);
+  --agent-oneoff: oklch(0.746 0.16 232.661);
+  --agent-oneoff-bg: oklch(0.746 0.16 232.661 / 10%);
+  --agent-event: oklch(0.842 0.164 84.429);
+  --agent-event-bg: oklch(0.842 0.164 84.429 / 10%);
+  --avatar-user: oklch(0.746 0.16 232.661);
+  --avatar-user-bg: oklch(0.685 0.169 237.323 / 15%);
+  --avatar-assistant: oklch(0.702 0.183 293.541);
+  --avatar-assistant-bg: oklch(0.660 0.204 292.608 / 15%);
 }
 
 .dark {
@@ -132,6 +164,8 @@ a,
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --perm-readonly: oklch(0.708 0 0);
+  --perm-readonly-bg: oklch(0.708 0 0 / 15%);
 }
 
 @layer base {

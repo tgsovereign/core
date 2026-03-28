@@ -56,8 +56,8 @@ function MessageAvatar({ isUser }: { isUser: boolean }) {
       className={cn(
         "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
         isUser
-          ? "bg-sky-500/15 text-sky-400"
-          : "bg-violet-500/15 text-violet-400",
+          ? "bg-avatar-user-bg text-avatar-user"
+          : "bg-avatar-assistant-bg text-avatar-assistant",
       )}
     >
       {isUser ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}

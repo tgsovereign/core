@@ -39,6 +39,7 @@ class AgentTaskOut(BaseModel):
     event_config: dict | None = None
     enabled: bool
     has_telegram_session: bool
+    can_edit_permission: bool
     created_at: datetime
     updated_at: datetime
 

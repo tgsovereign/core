@@ -18,6 +18,7 @@ export type AgentTask = {
   permission_level: string;
   enabled: boolean;
   has_telegram_session: boolean;
+  can_edit_permission: boolean;
   created_at: string;
   updated_at: string;
 };
