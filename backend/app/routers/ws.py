@@ -6,7 +6,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 
 from app.database import async_session
-from app.models.user import User
+from sovereign_schema.models.user import User
 from app.routers import _state as router_state
 from app.services.auth import decode_token
 from app.services.rabbitmq import publish_task

@@ -4,7 +4,7 @@ from telethon.tl.types import (
     User as TlUser,
 )
 
-from app.schemas.chat import Chat, Message
+from app.schemas.chat import Chat, Message  # Pydantic schemas stay in backend
 
 
 def dialog_to_chat(dialog) -> Chat:

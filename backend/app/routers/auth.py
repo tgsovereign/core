@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models.user import User
+from sovereign_schema.models.user import User
 from app.schemas.auth import (
     MeResponse,
     SaveApiKeyRequest,
@@ -20,7 +20,7 @@ from app.schemas.auth import (
 )
 from app.services.auth import get_current_user
 from app.services.telegram import telegram_manager
-from app.telegram.session_store import encrypt_session
+from sovereign_schema.crypto import encrypt_session
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 

@@ -4,6 +4,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from sovereign_schema.crypto import init_crypto
+
+from app.config import settings as app_settings
 from app.database import engine
 from app.routers import agent_tasks, auth, chats, conversations, ws
 from app.routers import _state as router_state
@@ -18,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_crypto(app_settings.session_encryption_key)
+
     # Start RabbitMQ connections
     rmq_conn = await get_connection()
     channel = await rmq_conn.channel()
