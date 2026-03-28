@@ -220,8 +220,8 @@ export default function AgentHeaderInfo({ agentId }: { agentId: string }) {
         <DropdownMenuContent align="end" className="w-60 p-0 overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-2.5 border-b border-border/50 px-3.5 py-2.5">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-violet-500/15">
-              <TypeIcon className="h-3.5 w-3.5 text-violet-400" />
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-avatar-assistant-bg">
+              <TypeIcon className="h-3.5 w-3.5 text-avatar-assistant" />
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{task.name}</p>

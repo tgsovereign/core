@@ -512,8 +512,8 @@ export default function NewAgentDialog({
                           !scheduledDate && "text-muted-foreground",
                         )}
                       >
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sky-400/10">
-                          <CalendarClock className="h-3.5 w-3.5 text-sky-400" />
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-agent-oneoff-bg">
+                          <CalendarClock className="h-3.5 w-3.5 text-agent-oneoff" />
                         </div>
                         <span>
                           {scheduledDate
@@ -536,8 +536,8 @@ export default function NewAgentDialog({
                     </Popover>
                     {/* Time picker */}
                     <div className="flex items-center gap-2.5 px-3 h-10">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-400/10">
-                        <Clock className="h-3.5 w-3.5 text-violet-400" />
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-agent-cron-bg">
+                        <Clock className="h-3.5 w-3.5 text-agent-cron" />
                       </div>
                       <input
                         type="time"

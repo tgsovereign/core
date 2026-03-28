@@ -95,12 +95,12 @@ const AGENT_TYPE_ICON: Record<
   string,
   { icon: typeof Clock; color: string; bg: string }
 > = {
-  cron: { icon: Clock, color: "text-violet-400", bg: "bg-violet-400/10" },
-  one_off: { icon: CalendarClock, color: "text-sky-400", bg: "bg-sky-400/10" },
+  cron: { icon: Clock, color: "text-agent-cron", bg: "bg-agent-cron-bg" },
+  one_off: { icon: CalendarClock, color: "text-agent-oneoff", bg: "bg-agent-oneoff-bg" },
   event_driven: {
     icon: MessageSquare,
-    color: "text-amber-400",
-    bg: "bg-amber-400/10",
+    color: "text-agent-event",
+    bg: "bg-agent-event-bg",
   },
 };
 
@@ -442,12 +442,12 @@ export default function Sidebar({
               </CollapsibleContent>
             </Collapsible>
           ) : (
-            <div className="mx-1 mb-2 overflow-hidden rounded-lg border border-border/40 bg-gradient-to-b from-violet-500/[0.03] to-transparent">
+            <div className="mx-1 mb-2 overflow-hidden rounded-lg border border-border/40 bg-gradient-to-b from-agent-cron/[0.03] to-transparent">
               <Empty className="border-0 p-4 gap-2.5">
                 <EmptyHeader className="gap-1.5">
                   <EmptyMedia
                     variant="icon"
-                    className="bg-violet-500/10 text-violet-400"
+                    className="bg-agent-cron-bg text-agent-cron"
                   >
                     <Sparkles className="h-4 w-4" />
                   </EmptyMedia>
@@ -459,7 +459,7 @@ export default function Sidebar({
                       href="https://web.tgsovereign.com"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                      className="font-medium text-agent-cron hover:opacity-80 transition-colors"
                     >
                       Sovereign Cloud
                     </a>
