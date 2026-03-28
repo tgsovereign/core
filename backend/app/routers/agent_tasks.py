@@ -5,8 +5,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models.agent_task import AgentTask
-from app.models.user import User
+from sovereign_schema.models.agent_task import AgentTask
+from sovereign_schema.models.user import User
 from sqlalchemy.orm import selectinload
 
 from app.schemas.agent_task import (
@@ -133,7 +133,7 @@ async def get_agent_task(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    from app.models.agent_task import AgentTaskUpdate as AgentTaskUpdateModel
+    from sovereign_schema.models.agent_task import AgentTaskUpdate as AgentTaskUpdateModel
 
     stmt = (
         select(AgentTask)

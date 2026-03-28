@@ -13,17 +13,15 @@ RUN cd schema && uv sync --frozen --no-dev 2>/dev/null || true
 
 COPY schema/ schema/
 
-# Install backend
-COPY backend/pyproject.toml backend/uv.lock* backend/
-RUN cd backend && uv sync --frozen --no-dev 2>/dev/null || true
+# Install helper
+COPY helper/pyproject.toml helper/uv.lock* helper/
+RUN cd helper && uv sync --frozen --no-dev 2>/dev/null || true
 
-COPY backend/ backend/
+COPY helper/ helper/
 
 # Generate lock if needed and sync
-RUN cd backend && uv sync --no-dev
+RUN cd helper && uv sync --no-dev
 
-WORKDIR /workspace/backend
+WORKDIR /workspace/helper
 
-EXPOSE 8000
-
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "python", "-m", "helper"]

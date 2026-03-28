@@ -9,8 +9,8 @@ from telethon.errors import SessionPasswordNeededError
 from telethon.sessions import StringSession
 
 from app.config import settings
-from app.models.user import User
-from app.telegram.session_store import encrypt_session, decrypt_session
+from sovereign_schema.models.user import User
+from sovereign_schema.crypto import encrypt_session, decrypt_session
 from app.telegram.event_handler import register_event_handlers
 
 logger = logging.getLogger(__name__)

@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models.conversation import Conversation
-from app.models.user import User
+from sovereign_schema.models.conversation import Conversation
+from sovereign_schema.models.user import User
 from app.schemas.conversation import (
     ConversationConfigResponse,
     ConversationConfigUpdate,

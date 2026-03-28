@@ -1,0 +1,14 @@
+[project]
+name = "sovereign-schema"
+version = "0.1.0"
+description = "Shared database schema for Sovereign services"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
+    "cryptography>=46.0.5",
+    "sqlalchemy[asyncio]>=2.0.48",
+]
+
+[tool.setuptools.packages.find]
+include = ["sovereign_schema*"]

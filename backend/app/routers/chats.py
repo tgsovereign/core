@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.models.user import User
+from sovereign_schema.models.user import User
 from app.schemas.chat import Chat, Message, SendMessageRequest
 from app.services.auth import get_current_user
 from app.services.telegram import telegram_manager
