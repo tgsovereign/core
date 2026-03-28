@@ -4,14 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - "backend/alembic/**"
+      - "schema/alembic/**"
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: schema
 
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,3 @@ jobs:
       - run: uv run alembic upgrade head
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          TELEGRAM_API_ID: "0"
-          TELEGRAM_API_HASH: "placeholder"
-          JWT_SECRET: "placeholder"
-          SESSION_ENCRYPTION_KEY: "placeholder"
