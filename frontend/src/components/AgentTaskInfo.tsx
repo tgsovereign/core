@@ -10,11 +10,12 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import type { AgentTask } from "@/lib/agent-tasks";
+import { cn } from "@/lib/utils";
 
 const PERM_LEVELS = [
-  { value: "read_only", label: "Read only", icon: Shield, variant: "outline" as const },
-  { value: "read_write", label: "Read & Write", icon: ShieldCheck, variant: "secondary" as const },
-  { value: "full_autonomy", label: "Full autonomy", icon: ShieldAlert, variant: "destructive" as const },
+  { value: "read_only", label: "Read only", icon: Shield, variant: "outline" as const, accent: "text-perm-readonly" },
+  { value: "read_write", label: "Read & Write", icon: ShieldCheck, variant: "secondary" as const, accent: "text-perm-readwrite" },
+  { value: "full_autonomy", label: "Full autonomy", icon: ShieldAlert, variant: "destructive" as const, accent: "text-perm-autonomy" },
 ] as const;
 
 const TYPE_LABELS: Record<string, { label: string; icon: typeof Clock }> = {
@@ -32,7 +33,7 @@ export default function AgentTaskInfo({ task }: { task: AgentTask }) {
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
       <div className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs">
-        <PermIcon className="h-3.5 w-3.5" />
+        <PermIcon className={cn("h-3.5 w-3.5", perm.accent)} />
         <Badge variant={perm.variant} className="text-xs">
           {perm.label}
         </Badge>

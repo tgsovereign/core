@@ -125,24 +125,28 @@ const PERM_OPTIONS: {
   label: string;
   description: string;
   icon: typeof Shield;
+  accent: string;
 }[] = [
   {
     value: "read_only",
     label: "Read only",
     description: "Can read messages but not send",
     icon: Shield,
+    accent: "text-perm-readonly",
   },
   {
     value: "read_write",
     label: "Read & Write",
     description: "Can read and send messages",
     icon: ShieldCheck,
+    accent: "text-perm-readwrite",
   },
   {
     value: "full_autonomy",
     label: "Full autonomy",
     description: "Can take any action autonomously",
     icon: ShieldAlert,
+    accent: "text-perm-autonomy",
   },
 ];
 
@@ -692,7 +696,7 @@ export default function NewAgentDialog({
                           : "border-border hover:bg-accent/50",
                       )}
                     >
-                      <Icon className="h-4 w-4 shrink-0" />
+                      <Icon className={cn("h-4 w-4 shrink-0", opt.accent)} />
                       <div>
                         <p className="font-medium">{opt.label}</p>
                         <p className="text-xs text-muted-foreground">

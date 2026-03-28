@@ -18,8 +18,8 @@ const LEVELS = [
     desc: "List chats, read & search messages",
     icon: Shield,
     variant: "outline" as const,
-    accent: "text-muted-foreground",
-    bg: "bg-muted/60",
+    accent: "text-perm-readonly",
+    bg: "bg-perm-readonly-bg",
   },
   {
     value: "read_write",
@@ -27,8 +27,8 @@ const LEVELS = [
     desc: "Above + send messages",
     icon: ShieldCheck,
     variant: "secondary" as const,
-    accent: "text-sky-400",
-    bg: "bg-sky-500/15",
+    accent: "text-perm-readwrite",
+    bg: "bg-perm-readwrite-bg",
   },
   {
     value: "full_autonomy",
@@ -36,8 +36,8 @@ const LEVELS = [
     desc: "All Telegram actions, unrestricted",
     icon: ShieldAlert,
     variant: "destructive" as const,
-    accent: "text-amber-400",
-    bg: "bg-amber-500/15",
+    accent: "text-perm-autonomy",
+    bg: "bg-perm-autonomy-bg",
   },
 ] as const;
 

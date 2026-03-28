@@ -110,18 +110,18 @@ const PERM_ICON: Record<
 > = {
   read_only: {
     icon: Shield,
-    color: "text-muted-foreground",
-    bg: "bg-muted/40",
+    color: "text-perm-readonly",
+    bg: "bg-perm-readonly-bg",
   },
   read_write: {
     icon: ShieldCheck,
-    color: "text-emerald-400",
-    bg: "bg-emerald-400/10",
+    color: "text-perm-readwrite",
+    bg: "bg-perm-readwrite-bg",
   },
   full_autonomy: {
     icon: ShieldAlert,
-    color: "text-orange-400",
-    bg: "bg-orange-400/10",
+    color: "text-perm-autonomy",
+    bg: "bg-perm-autonomy-bg",
   },
 };
 
