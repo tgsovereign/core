@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -13,6 +13,7 @@ from app.schemas.conversation import (
     ConversationConfigUpdate,
     ConversationCreate,
     ConversationDetailOut,
+    ConversationListOut,
     ConversationOut,
 )
 from app.services.auth import get_current_user
@@ -22,18 +23,21 @@ router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 VALID_LEVELS = {"read_only", "read_write", "full_autonomy"}
 
 
-@router.get("", response_model=list[ConversationOut])
+@router.get("", response_model=ConversationListOut)
 async def list_conversations(
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = (
-        select(Conversation)
-        .where(Conversation.user_id == user.id)
-        .order_by(Conversation.updated_at.desc())
-    )
+    base = select(Conversation).where(Conversation.user_id == user.id)
+    total_result = await db.execute(select(func.count()).select_from(base.subquery()))
+    total = total_result.scalar() or 0
+
+    stmt = base.order_by(Conversation.updated_at.desc()).limit(limit).offset(offset)
     result = await db.execute(stmt)
-    return result.scalars().all()
+    items = [ConversationOut.model_validate(c) for c in result.scalars().all()]
+    return ConversationListOut(items=items, total=total)
 
 
 @router.post("", response_model=ConversationOut, status_code=201)

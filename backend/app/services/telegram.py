@@ -129,6 +129,49 @@ class TelegramClientManager:
 
         return client
 
+    # --- Agent-specific auth (saves session to AgentTask, not User) ---
+
+    async def agent_send_code(self, phone: str) -> str:
+        return await self.send_code(phone)
+
+    async def agent_verify_code(
+        self, phone: str, code: str, phone_code_hash: str, task, db: AsyncSession
+    ) -> bool:
+        """Returns True if 2FA is needed, False if done."""
+        ph = phone_to_hash(phone)
+        client = self._auth_clients.get(ph)
+        if not client:
+            raise ValueError("No pending auth session. Call send_code first.")
+
+        try:
+            await client.sign_in(phone, code, phone_code_hash=phone_code_hash)
+        except SessionPasswordNeededError:
+            return True
+
+        await self._finalize_agent_auth(client, phone, task, db)
+        return False
+
+    async def agent_verify_2fa(
+        self, phone: str, password: str, task, db: AsyncSession
+    ) -> None:
+        ph = phone_to_hash(phone)
+        client = self._auth_clients.get(ph)
+        if not client:
+            raise ValueError("No pending auth session.")
+
+        await client.sign_in(password=password)
+        await self._finalize_agent_auth(client, phone, task, db)
+
+    async def _finalize_agent_auth(
+        self, client: TelegramClient, phone: str, task, db: AsyncSession
+    ) -> None:
+        ph = phone_to_hash(phone)
+        session_str = client.session.save()
+        task.telegram_session_encrypted = encrypt_session(session_str)
+        await db.commit()
+        self._auth_clients.pop(ph, None)
+        await client.disconnect()
+
     async def disconnect_all(self):
         for client in self._clients.values():
             try:

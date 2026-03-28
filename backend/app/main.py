@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine
-from app.routers import auth, chats, conversations, ws
+from app.routers import agent_tasks, auth, chats, conversations, ws
 from app.routers import _state as router_state
 from app.services.rabbitmq import get_connection, declare_infrastructure
 from app.services.telegram import telegram_manager
@@ -48,6 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(agent_tasks.router)
 app.include_router(auth.router)
 app.include_router(chats.router)
 app.include_router(conversations.router)

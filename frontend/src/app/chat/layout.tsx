@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, createContext, useContext, useRef } from "react";
+import { useEffect, useState, useCallback, createContext, useContext } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { clearToken, api } from "@/lib/api";
 import { SocketProvider } from "@/hooks/useSocket";
@@ -10,6 +10,7 @@ import { Menu } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import Sidebar from "@/components/Sidebar";
 import PermissionToggle, { type Level } from "@/components/PermissionToggle";
+import AgentHeaderInfo from "@/components/AgentHeaderInfo";
 
 export type TgUser = {
   id: number;
@@ -47,6 +48,10 @@ export default function ChatLayout({
   const match = pathname.match(/^\/chat\/([^/]+)$/);
   const conversationId = match ? match[1] : null;
 
+  // Extract agent ID from path like /chat/agent/<uuid>
+  const agentMatch = pathname.match(/^\/chat\/agent\/([^/]+)$/);
+  const agentId = agentMatch ? agentMatch[1] : null;
+
   useEffect(() => {
     api<TgUser>("/api/auth/me")
       .then(setUser)
@@ -82,16 +87,20 @@ export default function ChatLayout({
                 >
                   <Menu className="h-5 w-5" />
                 </button>
-                <Image src="/logo.svg" alt="Sovereign" width={28} height={28} />
-                <h1 className="text-lg font-semibold tracking-tight">
+                <Image src="/logo.svg" alt="Sovereign" width={28} height={28} className="hidden sm:block" />
+                <h1 className="hidden sm:block text-lg font-semibold tracking-tight">
                   Sovereign
                 </h1>
               </div>
               <div className="flex items-center gap-1 sm:gap-2">
-                <PermissionToggle
-                  conversationId={conversationId}
-                  onLevelChange={setPermissionLevel}
-                />
+                {agentId ? (
+                  <AgentHeaderInfo agentId={agentId} />
+                ) : (
+                  <PermissionToggle
+                    conversationId={conversationId}
+                    onLevelChange={setPermissionLevel}
+                  />
+                )}
               </div>
             </header>
             <Separator />

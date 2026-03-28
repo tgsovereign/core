@@ -8,6 +8,11 @@ export type Conversation = {
   updated_at: string;
 };
 
+export type ConversationPage = {
+  items: Conversation[];
+  total: number;
+};
+
 export type StoredMessage = {
   id: string;
   role: "user" | "assistant" | "tool";
@@ -21,8 +26,15 @@ export type ConversationDetail = Conversation & {
   messages: StoredMessage[];
 };
 
-export function listConversations(): Promise<Conversation[]> {
-  return api<Conversation[]>("/api/conversations");
+export function listConversations(opts?: {
+  limit?: number;
+  offset?: number;
+}): Promise<ConversationPage> {
+  const params = new URLSearchParams();
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.offset) params.set("offset", String(opts.offset));
+  const qs = params.toString();
+  return api<ConversationPage>(`/api/conversations${qs ? `?${qs}` : ""}`);
 }
 
 export function createConversation(
