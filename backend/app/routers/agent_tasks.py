@@ -31,6 +31,17 @@ router = APIRouter(prefix="/api/agent-tasks", tags=["agent-tasks"])
 VALID_PERMISSION_LEVELS = {"read_only", "read_write", "full_autonomy"}
 
 
+def _can_edit_permission(task: AgentTask) -> bool:
+    """Permission level is editable for non-one-off tasks always,
+    and for one-off tasks only before their scheduled time."""
+    if task.task_type != "one_off":
+        return True
+    if task.scheduled_at is None:
+        return True
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc) < task.scheduled_at
+
+
 def _task_to_out(task: AgentTask) -> AgentTaskOut:
     return AgentTaskOut(
         id=task.id,
@@ -43,6 +54,7 @@ def _task_to_out(task: AgentTask) -> AgentTaskOut:
         event_config=task.event_config,
         enabled=task.enabled,
         has_telegram_session=task.telegram_session_encrypted is not None,
+        can_edit_permission=_can_edit_permission(task),
         created_at=task.created_at,
         updated_at=task.updated_at,
     )
@@ -155,6 +167,11 @@ async def update_agent_task(
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid permission level. Must be one of: {VALID_PERMISSION_LEVELS}",
+            )
+        if not _can_edit_permission(task):
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot edit permission level for a one-off task after its scheduled time",
             )
 
     for field, value in update_data.items():
