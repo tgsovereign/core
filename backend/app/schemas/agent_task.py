@@ -40,6 +40,7 @@ class AgentTaskOut(BaseModel):
     enabled: bool
     has_telegram_session: bool
     can_edit_permission: bool
+    is_expired: bool
     created_at: datetime
     updated_at: datetime
 
