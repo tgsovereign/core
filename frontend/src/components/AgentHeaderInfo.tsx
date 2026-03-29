@@ -2,16 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   CalendarClock,
   Check,
   Clock,
   MessageSquare,
+  Pencil,
   Shield,
   ShieldCheck,
   ShieldAlert,
@@ -19,7 +27,9 @@ import {
   Send,
   ChevronDown,
   Lock,
+  Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   type AgentTask,
@@ -112,6 +122,116 @@ function DetailRow({
         </span>
         <div className="text-xs text-foreground">{children}</div>
       </div>
+    </div>
+  );
+}
+
+function ScheduledDateRow({
+  task,
+  setTask,
+}: {
+  task: AgentTask;
+  setTask: React.Dispatch<React.SetStateAction<AgentTask | null>>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [pickedDate, setPickedDate] = useState<Date | undefined>(undefined);
+  const [pickedTime, setPickedTime] = useState("12:00");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  function openEditor() {
+    const current = task.scheduled_at ? new Date(task.scheduled_at) : new Date();
+    setPickedDate(current);
+    setPickedTime(
+      `${current.getHours().toString().padStart(2, "0")}:${current.getMinutes().toString().padStart(2, "0")}`,
+    );
+    setError("");
+    setEditing(true);
+  }
+
+  async function handleSave() {
+    if (!pickedDate) return;
+    const [h, m] = pickedTime.split(":").map(Number);
+    const dt = new Date(pickedDate);
+    dt.setHours(h, m, 0, 0);
+
+    if (dt <= new Date()) {
+      setError("Date must be in the future");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      const updated = await updateAgentTask(task.id, {
+        scheduled_at: dt.toISOString(),
+      });
+      setTask(updated);
+      setEditing(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update schedule");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-muted/60">
+          <CalendarClock className="h-3 w-3 text-muted-foreground" />
+        </div>
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60">
+            Scheduled
+          </span>
+          <div className="text-xs text-foreground">
+            {new Date(task.scheduled_at!).toLocaleString()}
+          </div>
+        </div>
+      </div>
+      {task.is_expired && (
+        <Popover open={editing} onOpenChange={setEditing}>
+          <PopoverTrigger
+              onClick={openEditor}
+              className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              title="Reschedule"
+            >
+              <Pencil className="h-3 w-3" />
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={pickedDate}
+              onSelect={setPickedDate}
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+            />
+            <div className="border-t border-border/50 px-3 py-2 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Clock className="h-3 w-3 text-muted-foreground" />
+                <Input
+                  type="time"
+                  value={pickedTime}
+                  onChange={(e) => setPickedTime(e.target.value)}
+                  className="h-7 w-28 text-xs"
+                />
+              </div>
+              {error && (
+                <p className="text-[11px] text-destructive">{error}</p>
+              )}
+              <Button
+                size="sm"
+                className="w-full"
+                onClick={handleSave}
+                disabled={saving || !pickedDate}
+              >
+                {saving && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+                Reschedule
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   );
 }
@@ -270,9 +390,7 @@ export default function AgentHeaderInfo({ agentId }: { agentId: string }) {
             )}
 
             {task.task_type === "one_off" && task.scheduled_at && (
-              <DetailRow icon={CalendarClock} label="Scheduled">
-                {new Date(task.scheduled_at).toLocaleString()}
-              </DetailRow>
+              <ScheduledDateRow task={task} setTask={setTask} />
             )}
 
             <div className="flex items-center justify-between py-1.5">
@@ -287,29 +405,35 @@ export default function AgentHeaderInfo({ agentId }: { agentId: string }) {
                   <span
                     className={cn(
                       "text-xs",
-                      task.enabled ? "text-emerald-400" : "text-muted-foreground",
+                      task.is_expired
+                        ? "text-orange-400"
+                        : task.enabled
+                          ? "text-emerald-400"
+                          : "text-muted-foreground",
                     )}
                   >
-                    {task.enabled ? "Active" : "Paused"}
+                    {task.is_expired ? "Expired" : task.enabled ? "Active" : "Paused"}
                   </span>
                 </div>
               </div>
-              <Switch
-                size="sm"
-                checked={task.enabled}
-                onCheckedChange={async (checked) => {
-                  setTask((prev) => prev ? { ...prev, enabled: checked } : prev);
-                  try {
-                    if (checked) {
-                      await enableAgentTask(task.id);
-                    } else {
-                      await disableAgentTask(task.id);
+              {!task.is_expired && (
+                <Switch
+                  size="sm"
+                  checked={task.enabled}
+                  onCheckedChange={async (checked) => {
+                    setTask((prev) => prev ? { ...prev, enabled: checked } : prev);
+                    try {
+                      if (checked) {
+                        await enableAgentTask(task.id);
+                      } else {
+                        await disableAgentTask(task.id);
+                      }
+                    } catch {
+                      setTask((prev) => prev ? { ...prev, enabled: !checked } : prev);
                     }
-                  } catch {
-                    setTask((prev) => prev ? { ...prev, enabled: !checked } : prev);
-                  }
-                }}
-              />
+                  }}
+                />
+              )}
             </div>
 
             <DetailRow icon={Send} label="Telegram">

@@ -31,6 +31,16 @@ router = APIRouter(prefix="/api/agent-tasks", tags=["agent-tasks"])
 VALID_PERMISSION_LEVELS = {"read_only", "read_write", "full_autonomy"}
 
 
+def _is_expired(task: AgentTask) -> bool:
+    """A one-off task is expired when its scheduled time has passed."""
+    if task.task_type != "one_off":
+        return False
+    if task.scheduled_at is None:
+        return False
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc) >= task.scheduled_at
+
+
 def _can_edit_permission(task: AgentTask) -> bool:
     """Permission level is editable for non-one-off tasks always,
     and for one-off tasks only before their scheduled time."""
@@ -38,8 +48,7 @@ def _can_edit_permission(task: AgentTask) -> bool:
         return True
     if task.scheduled_at is None:
         return True
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc) < task.scheduled_at
+    return not _is_expired(task)
 
 
 def _task_to_out(task: AgentTask) -> AgentTaskOut:
@@ -55,6 +64,7 @@ def _task_to_out(task: AgentTask) -> AgentTaskOut:
         enabled=task.enabled,
         has_telegram_session=task.telegram_session_encrypted is not None,
         can_edit_permission=_can_edit_permission(task),
+        is_expired=_is_expired(task),
         created_at=task.created_at,
         updated_at=task.updated_at,
     )
@@ -109,6 +119,15 @@ async def create_agent_task(
         )
 
     data = body.model_dump()
+
+    # For one-off tasks, reject past scheduled dates
+    if body.task_type == "one_off" and body.scheduled_at is not None:
+        from datetime import datetime, timezone
+        if body.scheduled_at < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot schedule a one-off task in the past",
+            )
 
     # For cron tasks, compute the next fire time
     if body.task_type == "cron" and body.cron_expression:
@@ -173,6 +192,19 @@ async def update_agent_task(
                 status_code=403,
                 detail="Cannot edit permission level for a one-off task after its scheduled time",
             )
+
+    # Validate scheduled_at for one-off tasks: must not be in the past
+    if "scheduled_at" in update_data and task.task_type == "one_off":
+        from datetime import datetime, timezone
+        new_scheduled = update_data["scheduled_at"]
+        if new_scheduled is not None and new_scheduled < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot schedule a one-off task in the past",
+            )
+        # Re-enable the task when rescheduled to a future date
+        if new_scheduled is not None:
+            update_data["enabled"] = True
 
     for field, value in update_data.items():
         setattr(task, field, value)
