@@ -192,15 +192,12 @@ function ScheduledDateRow({
       </div>
       {task.is_expired && (
         <Popover open={editing} onOpenChange={setEditing}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
+          <PopoverTrigger
               onClick={openEditor}
               className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               title="Reschedule"
             >
               <Pencil className="h-3 w-3" />
-            </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
             <Calendar
