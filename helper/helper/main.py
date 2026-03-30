@@ -8,6 +8,7 @@ import signal
 import uuid
 
 import aio_pika
+from openai import AsyncOpenAI
 from sqlalchemy import select
 from telethon import TelegramClient
 from telethon.sessions import StringSession
@@ -16,17 +17,11 @@ from sovereign_schema.crypto import init_crypto, decrypt_session
 from sovereign_schema.models.conversation import Conversation
 from sovereign_schema.models.user import User
 
-from helper.agent.permissions import PermissionLevel
+from agent.permissions import PermissionLevel
 from helper.config import settings
 from helper.database import async_session, engine
-from helper.services.agent import run_agent
-from helper.services.rabbitmq import (
-    TASK_QUEUE,
-    WS_EXCHANGE,
-    declare_infrastructure,
-    get_connection,
-    publish_ws_update,
-)
+from helper.services.agent import AgentService
+from helper.services.rabbitmq import RabbitService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -54,7 +49,7 @@ async def _restore_client(user: User) -> TelegramClient | None:
 
 async def _process_task(
     message: aio_pika.abc.AbstractIncomingMessage,
-    ws_exchange: aio_pika.abc.AbstractExchange,
+    rabbit: RabbitService,
 ) -> None:
     async with message.process():
         task = json.loads(message.body)
@@ -95,9 +90,7 @@ async def _process_task(
         client = await _restore_client(user)
         if client is None:
             logger.error("Could not restore Telegram client for user %s", user_id)
-            # Notify frontend about the failure
-            await publish_ws_update(
-                ws_exchange,
+            await rabbit.publish_ws_update(
                 str(user_id),
                 json.dumps({
                     "type": "agent_response",
@@ -108,25 +101,26 @@ async def _process_task(
             )
             return
 
-        # Build a send callback that publishes to the ws_updates exchange
+        # Build a send callback bound to this RabbitService instance
         async def send(uid: uuid.UUID, payload: str) -> None:
-            await publish_ws_update(ws_exchange, str(uid), payload)
+            await rabbit.publish_ws_update(str(uid), payload)
 
         try:
-            await run_agent(
+            if not openai_api_key:
+                raise ValueError("No OpenAI API key configured.")
+
+            svc = AgentService(
                 user_id=user_id,
-                request_id=request_id,
-                prompt=prompt,
-                permission_level=level,
-                client=client,
                 conversation_id=conversation_id,
+                request_id=request_id,
                 send=send,
-                openai_api_key=openai_api_key,
+                openai_client=AsyncOpenAI(api_key=openai_api_key),
+                client=client,
             )
+            await svc.run(prompt, level)
         except Exception:
             logger.exception("Agent failed for task %s", request_id)
-            await publish_ws_update(
-                ws_exchange,
+            await rabbit.publish_ws_update(
                 str(user_id),
                 json.dumps({
                     "type": "agent_response",
@@ -154,18 +148,16 @@ async def main() -> None:
     for sig in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(sig, shutdown_event.set)
 
-    connection = await get_connection()
-    channel = await connection.channel()
-    await channel.set_qos(prefetch_count=prefetch_count)
+    rabbit = RabbitService()
+    await rabbit.connect(prefetch_count=prefetch_count)
 
-    queue, ws_exchange = await declare_infrastructure(channel)
-
-    logger.info("Helper ready — consuming from %s (prefetch=%d)", TASK_QUEUE, prefetch_count)
+    logger.info("Helper ready — consuming (prefetch=%d)", prefetch_count)
 
     async def _consume() -> None:
-        async with queue.iterator() as queue_iter:
+        assert rabbit.queue is not None
+        async with rabbit.queue.iterator() as queue_iter:
             async for message in queue_iter:
-                task = asyncio.create_task(_process_task(message, ws_exchange))
+                task = asyncio.create_task(_process_task(message, rabbit))
                 in_flight.add(task)
                 task.add_done_callback(in_flight.discard)
 
@@ -193,8 +185,7 @@ async def main() -> None:
             await asyncio.wait(pending, timeout=5)
 
     # Clean up connections
-    await channel.close()
-    await connection.close()
+    await rabbit.close()
     await engine.dispose()
     logger.info("Helper shut down.")
 

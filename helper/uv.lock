@@ -763,6 +763,17 @@ wheels = [
 ]
 
 [[package]]
+name = "sovereign-agent"
+version = "0.1.0"
+source = { directory = "../common" }
+dependencies = [
+    { name = "openai" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "openai", specifier = ">=1.0" }]
+
+[[package]]
 name = "sovereign-helper"
 version = "0.1.0"
 source = { virtual = "." }
@@ -772,6 +783,7 @@ dependencies = [
     { name = "croniter" },
     { name = "openai" },
     { name = "pydantic-settings" },
+    { name = "sovereign-agent" },
     { name = "sovereign-schema" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "telethon" },
@@ -784,6 +796,7 @@ requires-dist = [
     { name = "croniter", specifier = ">=6.2.2" },
     { name = "openai", specifier = ">=2.29.0" },
     { name = "pydantic-settings", specifier = ">=2.13.1" },
+    { name = "sovereign-agent", directory = "../common" },
     { name = "sovereign-schema", directory = "../schema" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.48" },
     { name = "telethon", specifier = ">=1.42.0" },
