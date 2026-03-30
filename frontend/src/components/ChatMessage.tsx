@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Check, Pencil, User, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 
 export type ToolCall = {
   tool: string;
@@ -19,6 +19,7 @@ export type Message = {
   role: "user" | "assistant";
   content: string;
   tools?: ToolCall[];
+  created_at?: string;
 };
 
 function ToolBadge({ tc }: { tc: ToolCall }) {
@@ -124,12 +125,17 @@ export default function ChatMessage({
               <button
                 type="button"
                 onClick={startEdit}
-                className="absolute -top-2 -right-2 hidden h-6 w-6 items-center justify-center rounded-full bg-muted border border-border text-muted-foreground hover:text-foreground group-hover:inline-flex"
+                className="absolute -top-2 -right-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted border border-border text-muted-foreground hover:text-foreground"
               >
                 <Pencil className="h-3 w-3" />
               </button>
             )}
           </div>
+        )}
+        {message.created_at && !editing && (
+          <span className="text-[11px] text-muted-foreground/50 px-1">
+            {timeAgo(message.created_at)}
+          </span>
         )}
         {editing && (
           <div className="flex w-full max-w-md flex-col gap-2">

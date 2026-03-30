@@ -58,15 +58,16 @@ function updatesToMessages(updates: AgentTaskUpdate[]): Message[] {
         if (last && last.role === "assistant") {
           last.tools = [...(last.tools ?? []), ...tools];
         } else {
-          messages.push({ id: u.id, role: "assistant", content: "", tools });
+          messages.push({ id: u.id, role: "assistant", content: "", tools, created_at: u.created_at });
         }
       } else if (u.content) {
         const last = messages[messages.length - 1];
         if (last && last.role === "assistant" && !last.content && last.tools) {
           last.content = u.content;
           last.id = u.id;
+          last.created_at = u.created_at;
         } else {
-          messages.push({ id: u.id, role: "assistant", content: u.content });
+          messages.push({ id: u.id, role: "assistant", content: u.content, created_at: u.created_at });
         }
       }
     }
@@ -195,8 +196,6 @@ export default function AgentChatPage({
     );
   }
 
-  const isEditable =
-    task.task_type === "cron" || task.task_type === "event_driven";
   const historicMessages = updatesToMessages(task.updates);
   const allMessages = [...historicMessages, ...liveMessages];
 
@@ -211,7 +210,7 @@ export default function AgentChatPage({
               role: "user",
               content: task.system_prompt,
             }}
-            editable={isEditable}
+            editable
             onEdit={handleEditSystemPrompt}
           />
 
