@@ -12,6 +12,7 @@ RUN mkdir -p schema/sovereign_schema && touch schema/sovereign_schema/__init__.p
 RUN cd schema && uv sync --frozen --no-dev 2>/dev/null || true
 
 COPY schema/ schema/
+COPY common/ common/
 
 # Install helper
 COPY helper/pyproject.toml helper/uv.lock* helper/
