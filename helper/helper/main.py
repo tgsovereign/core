@@ -6,6 +6,7 @@ import logging
 import os
 import signal
 import uuid
+from typing import Any
 
 import aio_pika
 from openai import AsyncOpenAI
@@ -92,17 +93,17 @@ async def _process_task(
             logger.error("Could not restore Telegram client for user %s", user_id)
             await rabbit.publish_ws_update(
                 str(user_id),
-                json.dumps({
+                {
                     "type": "agent_response",
                     "request_id": request_id,
                     "content": "Your Telegram session has expired. Please re-authenticate.",
                     "done": True,
-                }),
+                },
             )
             return
 
         # Build a send callback bound to this RabbitService instance
-        async def send(uid: uuid.UUID, payload: str) -> None:
+        async def send(uid: uuid.UUID, payload: dict[str, Any]) -> None:
             await rabbit.publish_ws_update(str(uid), payload)
 
         try:
@@ -122,12 +123,12 @@ async def _process_task(
             logger.exception("Agent failed for task %s", request_id)
             await rabbit.publish_ws_update(
                 str(user_id),
-                json.dumps({
+                {
                     "type": "agent_response",
                     "request_id": request_id,
                     "content": "Something went wrong while processing your request.",
                     "done": True,
-                }),
+                },
             )
         finally:
             await client.disconnect()

@@ -33,8 +33,8 @@ async def start_ws_relay() -> aio_pika.abc.AbstractRobustConnection:
             try:
                 data = json.loads(message.body)
                 user_id = uuid.UUID(data["user_id"])
-                payload = data["payload"]
-                await ws_manager.send(user_id, payload)
+                payload = data["payload"]  # dict from publisher
+                await ws_manager.send(user_id, json.dumps(payload))
             except Exception:
                 logger.exception("Failed to relay WS update")
 
