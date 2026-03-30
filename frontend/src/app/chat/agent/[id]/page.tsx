@@ -195,8 +195,6 @@ export default function AgentChatPage({
     );
   }
 
-  const isEditable =
-    task.task_type === "cron" || task.task_type === "event_driven";
   const historicMessages = updatesToMessages(task.updates);
   const allMessages = [...historicMessages, ...liveMessages];
 
@@ -211,7 +209,7 @@ export default function AgentChatPage({
               role: "user",
               content: task.system_prompt,
             }}
-            editable={isEditable}
+            editable
             onEdit={handleEditSystemPrompt}
           />
 
