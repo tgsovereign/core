@@ -41,30 +41,3 @@ async def publish_task(
         ),
         routing_key=TASK_QUEUE,
     )
-
-
-async def publish_cloud_agent_task(
-    channel: aio_pika.abc.AbstractChannel,
-    task: dict[str, Any],
-) -> None:
-    """Publish a cloud agent task to the cloud_agent_tasks queue."""
-    await channel.default_exchange.publish(
-        Message(
-            body=json.dumps(task).encode(),
-            delivery_mode=DeliveryMode.PERSISTENT,
-        ),
-        routing_key=CLOUD_AGENT_TASK_QUEUE,
-    )
-
-
-async def publish_ws_update(
-    exchange: aio_pika.abc.AbstractExchange,
-    user_id: str,
-    payload: dict[str, Any],
-) -> None:
-    """Publish a WebSocket update for the backend to relay."""
-    message = json.dumps({"user_id": user_id, "payload": payload})
-    await exchange.publish(
-        Message(body=message.encode()),
-        routing_key="",
-    )
