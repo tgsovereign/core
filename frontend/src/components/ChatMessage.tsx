@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot, Check, Pencil, User, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 
 export type ToolCall = {
   tool: string;
@@ -19,6 +19,7 @@ export type Message = {
   role: "user" | "assistant";
   content: string;
   tools?: ToolCall[];
+  created_at?: string;
 };
 
 function ToolBadge({ tc }: { tc: ToolCall }) {
@@ -130,6 +131,11 @@ export default function ChatMessage({
               </button>
             )}
           </div>
+        )}
+        {message.created_at && !editing && (
+          <span className="text-[11px] text-muted-foreground/50 px-1">
+            {timeAgo(message.created_at)}
+          </span>
         )}
         {editing && (
           <div className="flex w-full max-w-md flex-col gap-2">

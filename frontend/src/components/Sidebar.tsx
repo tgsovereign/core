@@ -73,23 +73,13 @@ import {
 } from "@/lib/agent-tasks";
 import { useSocket, WsMessage } from "@/hooks/useSocket";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { cn } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 import { api, getToken } from "@/lib/api";
 import type { TgUser } from "@/app/chat/layout";
 import NewAgentDialog from "@/components/NewAgentDialog";
 
 const PAGE_SIZE = 30;
 
-function timeAgo(dateStr: string): string {
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 const AGENT_TYPE_ICON: Record<
   string,

@@ -14,7 +14,7 @@ function storedToMessages(stored: StoredMessage[]): Message[] {
 
   for (const m of stored) {
     if (m.role === "user") {
-      messages.push({ id: m.id, role: "user", content: m.content ?? "" });
+      messages.push({ id: m.id, role: "user", content: m.content ?? "", created_at: m.created_at });
     } else if (m.role === "assistant") {
       // Assistant messages with tool_calls but no content are intermediate — attach tools to next final message
       if (m.tool_calls && m.tool_calls.length > 0 && !m.content) {
@@ -34,7 +34,7 @@ function storedToMessages(stored: StoredMessage[]): Message[] {
         if (last && last.role === "assistant") {
           last.tools = [...(last.tools ?? []), ...tools];
         } else {
-          messages.push({ id: m.id, role: "assistant", content: "", tools });
+          messages.push({ id: m.id, role: "assistant", content: "", tools, created_at: m.created_at });
         }
       } else if (m.content) {
         // Final assistant response — attach to existing message with tools or create new
@@ -42,8 +42,9 @@ function storedToMessages(stored: StoredMessage[]): Message[] {
         if (last && last.role === "assistant" && !last.content && last.tools) {
           last.content = m.content;
           last.id = m.id;
+          last.created_at = m.created_at;
         } else {
-          messages.push({ id: m.id, role: "assistant", content: m.content });
+          messages.push({ id: m.id, role: "assistant", content: m.content, created_at: m.created_at });
         }
       }
     }
