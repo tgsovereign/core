@@ -3,8 +3,8 @@ from telethon.tl.functions.channels import GetFullChannelRequest
 from telethon.tl.functions.messages import GetFullChatRequest
 from telethon.tl.types import Channel, Chat as TlChat, User as TlUser
 
-from helper.agent.permissions import PermissionLevel
-from helper.agent.registry import registry
+from ..permissions import PermissionLevel
+from ..registry import registry
 
 
 @registry.register(

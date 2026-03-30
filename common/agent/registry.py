@@ -2,7 +2,7 @@ import inspect
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from helper.agent.permissions import PermissionLevel
+from .permissions import PermissionLevel
 
 
 @dataclass

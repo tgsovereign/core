@@ -1,5 +1,5 @@
 # Import all tool modules so they register with the registry
-from helper.agent.tools import (
+from . import (
     create_group,
     delete_message,
     edit_message,

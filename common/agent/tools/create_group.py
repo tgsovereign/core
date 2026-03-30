@@ -1,8 +1,8 @@
 from telethon import TelegramClient
 from telethon.tl.functions.messages import CreateChatRequest
 
-from helper.agent.permissions import PermissionLevel
-from helper.agent.registry import registry
+from ..permissions import PermissionLevel
+from ..registry import registry
 
 
 @registry.register(

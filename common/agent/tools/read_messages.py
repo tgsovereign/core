@@ -1,7 +1,7 @@
 from telethon import TelegramClient
 
-from helper.agent.permissions import PermissionLevel
-from helper.agent.registry import registry
+from ..permissions import PermissionLevel
+from ..registry import registry
 from helper.telegram.converters import message_to_dict
 
 

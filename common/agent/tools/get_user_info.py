@@ -2,8 +2,8 @@ from telethon import TelegramClient
 from telethon.tl.functions.users import GetFullUserRequest
 from telethon.tl.types import UserStatusOnline, UserStatusOffline, UserStatusRecently
 
-from helper.agent.permissions import PermissionLevel
-from helper.agent.registry import registry
+from ..permissions import PermissionLevel
+from ..registry import registry
 
 
 @registry.register(

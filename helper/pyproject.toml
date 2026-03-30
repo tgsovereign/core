@@ -10,10 +10,12 @@ dependencies = [
     "croniter>=6.2.2",
     "openai>=2.29.0",
     "pydantic-settings>=2.13.1",
+    "sovereign-agent",
     "sovereign-schema",
     "sqlalchemy[asyncio]>=2.0.48",
     "telethon>=1.42.0",
 ]
 
 [tool.uv.sources]
+sovereign-agent = { path = "../common" }
 sovereign-schema = { path = "../schema" }
