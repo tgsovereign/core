@@ -2,8 +2,9 @@ import asyncio
 import json
 import logging
 import uuid
-from collections.abc import Callable, Awaitable
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
+from typing import Any
 
 from openai import AsyncOpenAI
 from sqlalchemy import select
@@ -13,11 +14,11 @@ from agent import Agent, AssistantMessage, Done, ToolCall, ToolResult, registry
 from agent.permissions import PermissionLevel
 import agent.tools  # noqa: F401 — triggers tool registration on the shared registry
 
-from helper.database import async_session
+from worker.database import async_session
 from sovereign_schema.models.conversation import Conversation, ConversationMessage
 
-# Type alias for the send callback: (user_id, message_json) -> None
-SendFn = Callable[[uuid.UUID, str], Awaitable[None]]
+# Type alias for the send callback: (user_id, payload_dict) -> None
+SendFn = Callable[[uuid.UUID, dict[str, Any]], Awaitable[None]]
 
 logger = logging.getLogger(__name__)
 
@@ -94,11 +95,12 @@ class AgentService:
 
             await self.send(
                 self.user_id,
-                json.dumps({
+                {
                     "type": "conversation_title_updated",
+                    "request_id": self.request_id,
                     "conversation_id": str(self.conversation_id),
                     "title": title,
-                }),
+                },
             )
         except Exception:
             logger.exception("Failed to generate title for conversation %s", self.conversation_id)
@@ -175,13 +177,13 @@ class AgentService:
                 case ToolCall(tool_name=fn_name, arguments=fn_args):
                     await self.send(
                         self.user_id,
-                        json.dumps({
+                        {
                             "type": "agent_tool_execution",
                             "request_id": self.request_id,
                             "tool": fn_name,
                             "arguments": fn_args,
                             "status": "running",
-                        }),
+                        },
                     )
 
                 case ToolResult(call_id=call_id, tool_name=fn_name, arguments=fn_args, result=result):
@@ -190,14 +192,14 @@ class AgentService:
                     )
                     await self.send(
                         self.user_id,
-                        json.dumps({
+                        {
                             "type": "agent_tool_execution",
                             "request_id": self.request_id,
                             "tool": fn_name,
                             "arguments": fn_args,
                             "status": "done",
                             "result": result,
-                        }),
+                        },
                     )
 
                 case Done(content=content):
@@ -205,10 +207,10 @@ class AgentService:
                     await self._update_conversation_timestamp()
                     await self.send(
                         self.user_id,
-                        json.dumps({
+                        {
                             "type": "agent_response",
                             "request_id": self.request_id,
                             "content": content,
                             "done": True,
-                        }),
+                        },
                     )

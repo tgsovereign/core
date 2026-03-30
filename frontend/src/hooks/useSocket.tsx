@@ -16,6 +16,7 @@ const WS_BASE = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000";
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
 
+// Helper messages use request_id; agent service messages use agent_task_id
 export type WsMessage =
   | {
       type: "agent_response";
@@ -33,8 +34,23 @@ export type WsMessage =
     }
   | {
       type: "conversation_title_updated";
+      request_id: string;
       conversation_id: string;
       title: string;
+    }
+  | {
+      type: "agent_response";
+      agent_task_id: string;
+      content: string;
+      done: boolean;
+    }
+  | {
+      type: "agent_tool_execution";
+      agent_task_id: string;
+      tool: string;
+      arguments: Record<string, unknown>;
+      status: "running" | "done";
+      result?: unknown;
     };
 
 type Listener = (msg: WsMessage) => void;

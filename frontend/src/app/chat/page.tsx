@@ -31,6 +31,7 @@ export default function NewChatPage() {
   const handleWs = useCallback(
     (msg: WsMessage) => {
       if (msg.type === "conversation_title_updated") return;
+      if (!("request_id" in msg)) return;
 
       const rid = msg.request_id;
       if (rid !== pendingRef.current) return;

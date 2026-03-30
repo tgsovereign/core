@@ -6,6 +6,7 @@ import logging
 import os
 import signal
 import uuid
+from typing import Any
 
 import aio_pika
 from openai import AsyncOpenAI
@@ -18,10 +19,10 @@ from sovereign_schema.models.conversation import Conversation
 from sovereign_schema.models.user import User
 
 from agent.permissions import PermissionLevel
-from helper.config import settings
-from helper.database import async_session, engine
-from helper.services.agent import AgentService
-from helper.services.rabbitmq import RabbitService
+from worker.config import settings
+from worker.database import async_session, engine
+from worker.services.agent import AgentService
+from worker.services.rabbitmq import RabbitService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -92,17 +93,17 @@ async def _process_task(
             logger.error("Could not restore Telegram client for user %s", user_id)
             await rabbit.publish_ws_update(
                 str(user_id),
-                json.dumps({
+                {
                     "type": "agent_response",
                     "request_id": request_id,
                     "content": "Your Telegram session has expired. Please re-authenticate.",
                     "done": True,
-                }),
+                },
             )
             return
 
         # Build a send callback bound to this RabbitService instance
-        async def send(uid: uuid.UUID, payload: str) -> None:
+        async def send(uid: uuid.UUID, payload: dict[str, Any]) -> None:
             await rabbit.publish_ws_update(str(uid), payload)
 
         try:
@@ -122,12 +123,12 @@ async def _process_task(
             logger.exception("Agent failed for task %s", request_id)
             await rabbit.publish_ws_update(
                 str(user_id),
-                json.dumps({
+                {
                     "type": "agent_response",
                     "request_id": request_id,
                     "content": "Something went wrong while processing your request.",
                     "done": True,
-                }),
+                },
             )
         finally:
             await client.disconnect()

@@ -9,6 +9,7 @@ description = "Sovereign AI agent core — LLM agentic loop with tool execution"
 requires-python = ">=3.11"
 dependencies = [
     "openai>=1.0",
+    "telethon>=1.42.0",
 ]
 
 [tool.hatch.build.targets.wheel]

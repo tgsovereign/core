@@ -91,9 +91,10 @@ export default function ConversationPage({
       .catch(() => {});
   }, [id]);
 
-  // Handle incoming WS messages
+  // Handle incoming WS messages (only from helper service, identified by request_id)
   const handleWs = useCallback((msg: WsMessage) => {
     if (msg.type === "conversation_title_updated") return;
+    if (!("request_id" in msg)) return;
 
     const rid = msg.request_id;
     if (rid !== pendingRef.current) return;

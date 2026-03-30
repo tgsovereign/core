@@ -5,7 +5,7 @@ from typing import Any
 import aio_pika
 from aio_pika import DeliveryMode, ExchangeType, Message
 
-from helper.config import settings
+from worker.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,9 @@ class RabbitService:
 
         self.queue = await self.channel.declare_queue(TASK_QUEUE, durable=True)
         self.ws_exchange = await self.channel.declare_exchange(
-            WS_EXCHANGE, ExchangeType.FANOUT, durable=True,
+            WS_EXCHANGE,
+            ExchangeType.FANOUT,
+            durable=True,
         )
 
     async def close(self) -> None:
@@ -48,7 +50,7 @@ class RabbitService:
             routing_key=TASK_QUEUE,
         )
 
-    async def publish_ws_update(self, user_id: str, payload: str) -> None:
+    async def publish_ws_update(self, user_id: str, payload: dict[str, Any]) -> None:
         assert self.ws_exchange is not None
         message = json.dumps({"user_id": user_id, "payload": payload})
         await self.ws_exchange.publish(
