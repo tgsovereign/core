@@ -14,7 +14,7 @@ from agent import Agent, AssistantMessage, Done, ToolCall, ToolResult, registry
 from agent.permissions import PermissionLevel
 import agent.tools  # noqa: F401 — triggers tool registration on the shared registry
 
-from helper.database import async_session
+from worker.database import async_session
 from sovereign_schema.models.conversation import Conversation, ConversationMessage
 
 # Type alias for the send callback: (user_id, payload_dict) -> None

@@ -2,7 +2,7 @@ from telethon import TelegramClient
 
 from ..permissions import PermissionLevel
 from ..registry import registry
-from helper.telegram.converters import dialog_to_chat
+from ..converters import dialog_to_chat
 
 
 @registry.register(

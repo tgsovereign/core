@@ -19,10 +19,10 @@ from sovereign_schema.models.conversation import Conversation
 from sovereign_schema.models.user import User
 
 from agent.permissions import PermissionLevel
-from helper.config import settings
-from helper.database import async_session, engine
-from helper.services.agent import AgentService
-from helper.services.rabbitmq import RabbitService
+from worker.config import settings
+from worker.database import async_session, engine
+from worker.services.agent import AgentService
+from worker.services.rabbitmq import RabbitService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -5,7 +5,7 @@ from typing import Any
 import aio_pika
 from aio_pika import DeliveryMode, ExchangeType, Message
 
-from helper.config import settings
+from worker.config import settings
 
 logger = logging.getLogger(__name__)
 

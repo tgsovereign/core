@@ -71,7 +71,7 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    command: uv run python -m helper
+    command: uv run python -m worker
 
   frontend:
     build: ./frontend

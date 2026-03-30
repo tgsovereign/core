@@ -25,4 +25,4 @@ RUN cd helper && uv sync --no-dev
 
 WORKDIR /workspace/helper
 
-CMD ["uv", "run", "python", "-m", "helper"]
+CMD ["uv", "run", "python", "-m", "worker"]

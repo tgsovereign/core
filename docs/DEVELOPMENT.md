@@ -56,7 +56,7 @@ via a RabbitMQ work queue. In a separate terminal:
 cd helper
 cp ../backend/.env .env   # shares the same secrets as the backend
 uv sync
-uv run python -m helper
+uv run python -m worker
 ```
 
 Each helper processes up to `PREFETCH_COUNT` tasks concurrently (default `8`).
