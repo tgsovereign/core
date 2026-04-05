@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, setToken } from "@/lib/api";
+import { api } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -30,8 +30,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function completeLogin(token: string, hasOpenaiKey: boolean) {
-    setToken(token);
+  function completeLogin(hasOpenaiKey: boolean) {
     if (hasOpenaiKey) {
       router.push("/chat");
     } else {
@@ -62,7 +61,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await api<{ token: string | null; next: string | null; has_openai_key: boolean | null }>(
+      const res = await api<{ next: string | null; has_openai_key: boolean | null }>(
         "/api/auth/verify-code",
         {
           method: "POST",
@@ -71,8 +70,8 @@ export default function LoginPage() {
       );
       if (res.next === "2fa") {
         setStep("2fa");
-      } else if (res.token) {
-        completeLogin(res.token, res.has_openai_key ?? false);
+      } else {
+        completeLogin(res.has_openai_key ?? false);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Invalid code");
@@ -86,11 +85,11 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await api<{ token: string; has_openai_key: boolean }>("/api/auth/verify-2fa", {
+      const res = await api<{ has_openai_key: boolean }>("/api/auth/verify-2fa", {
         method: "POST",
         body: JSON.stringify({ phone, password }),
       });
-      completeLogin(res.token, res.has_openai_key);
+      completeLogin(res.has_openai_key);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Invalid password");
     } finally {

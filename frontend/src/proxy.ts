@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
+  const loggedIn = request.cookies.get("logged_in")?.value;
   const { pathname } = request.nextUrl;
 
   // Logged-in users hitting the login page → redirect to /chat
-  if (pathname === "/" && token) {
+  if (pathname === "/" && loggedIn) {
     return NextResponse.redirect(new URL("/chat", request.url));
   }
 
   // Unauthenticated users hitting /chat → redirect to login
-  if (pathname.startsWith("/chat") && !token) {
+  if (pathname.startsWith("/chat") && !loggedIn) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 

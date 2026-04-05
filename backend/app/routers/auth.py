@@ -1,7 +1,7 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,7 +18,12 @@ from app.schemas.auth import (
     VerifyCodeRequest,
     VerifyCodeResponse,
 )
-from app.services.auth import get_current_user
+from app.services.auth import (
+    clear_auth_cookies,
+    decode_token,
+    get_current_user,
+    set_auth_cookies,
+)
 from app.services.telegram import telegram_manager
 from sovereign_schema.crypto import encrypt_session
 
@@ -42,9 +47,11 @@ async def me(user: User = Depends(get_current_user)):
 
 
 @router.get("/me/photo")
-async def me_photo(token: str, db: AsyncSession = Depends(get_db)):
-    """Profile photo endpoint. Accepts token as query param since <img> tags can't send headers."""
-    from app.services.auth import decode_token
+async def me_photo(request: Request, db: AsyncSession = Depends(get_db)):
+    """Profile photo endpoint. Auth via cookie."""
+    token = request.cookies.get("token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
     user_id = decode_token(token)
     stmt = select(User).where(User.id == uuid.UUID(user_id))
@@ -72,26 +79,41 @@ async def send_code(req: SendCodeRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/verify-code", response_model=VerifyCodeResponse)
+@router.post("/verify-code")
 async def verify_code(req: VerifyCodeRequest, db: AsyncSession = Depends(get_db)):
     try:
         token, needs_2fa, has_openai_key = await telegram_manager.verify_code(
             req.phone, req.code, req.phone_code_hash, db
         )
         if needs_2fa:
-            return VerifyCodeResponse(next="2fa")
-        return VerifyCodeResponse(token=token, has_openai_key=has_openai_key)
+            return JSONResponse(content=VerifyCodeResponse(next="2fa").model_dump())
+        response = JSONResponse(
+            content=VerifyCodeResponse(has_openai_key=has_openai_key).model_dump()
+        )
+        set_auth_cookies(response, token)
+        return response
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/verify-2fa", response_model=Verify2FAResponse)
+@router.post("/verify-2fa")
 async def verify_2fa(req: Verify2FARequest, db: AsyncSession = Depends(get_db)):
     try:
         token, has_openai_key = await telegram_manager.verify_2fa(req.phone, req.password, db)
-        return Verify2FAResponse(token=token, has_openai_key=has_openai_key)
+        response = JSONResponse(
+            content=Verify2FAResponse(has_openai_key=has_openai_key).model_dump()
+        )
+        set_auth_cookies(response, token)
+        return response
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/logout")
+async def logout():
+    response = JSONResponse(content={"ok": True})
+    clear_auth_cookies(response)
+    return response
 
 
 @router.post("/api-key", response_model=SaveApiKeyResponse)
