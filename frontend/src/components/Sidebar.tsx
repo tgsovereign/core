@@ -74,7 +74,7 @@ import {
 import { useSocket, WsMessage } from "@/hooks/useSocket";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { cn, timeAgo } from "@/lib/utils";
-import { api, getToken } from "@/lib/api";
+import { api } from "@/lib/api";
 import type { TgUser } from "@/app/chat/layout";
 import NewAgentDialog from "@/components/NewAgentDialog";
 
@@ -504,8 +504,9 @@ export default function Sidebar({
         <DropdownMenuTrigger className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sidebar-accent/50 focus:outline-none">
           <Avatar>
             <AvatarImage
-              src={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/auth/me/photo?token=${getToken()}`}
+              src={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/auth/me/photo`}
               alt={user.first_name ?? "User"}
+              crossOrigin="use-credentials"
             />
             <AvatarFallback>
               {(user.first_name?.[0] ?? "").toUpperCase()}
@@ -535,8 +536,9 @@ export default function Sidebar({
               <div className="flex items-center gap-3 px-2 py-1.5 text-left text-sm">
                 <Avatar>
                   <AvatarImage
-                    src={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/auth/me/photo?token=${getToken()}`}
+                    src={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/auth/me/photo`}
                     alt={user.first_name ?? "User"}
+                    crossOrigin="use-credentials"
                   />
                   <AvatarFallback>
                     {(user.first_name?.[0] ?? "").toUpperCase()}

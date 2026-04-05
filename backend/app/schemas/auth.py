@@ -17,7 +17,6 @@ class VerifyCodeRequest(BaseModel):
 
 
 class VerifyCodeResponse(BaseModel):
-    token: str | None = None
     next: str | None = None  # "2fa" if 2FA required
     has_openai_key: bool | None = None
 
@@ -28,7 +27,6 @@ class Verify2FARequest(BaseModel):
 
 
 class Verify2FAResponse(BaseModel):
-    token: str
     has_openai_key: bool = False
 
 

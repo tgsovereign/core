@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getToken } from "@/lib/api";
+import { isLoggedIn } from "@/lib/api";
 
 const WS_BASE = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8000";
 
@@ -79,10 +79,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     unmountedRef.current = false;
 
     function connect() {
-      const token = getToken();
-      if (!token || unmountedRef.current) return;
+      if (!isLoggedIn() || unmountedRef.current) return;
 
-      const ws = new WebSocket(`${WS_BASE}/api/ws?token=${token}`);
+      const ws = new WebSocket(`${WS_BASE}/api/ws`);
       wsRef.current = ws;
 
       ws.onopen = () => {

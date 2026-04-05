@@ -21,12 +21,15 @@ router = APIRouter()
 
 @router.websocket("/api/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str | None = None):
-    if not token:
+    # Prefer cookie, fall back to query param for backwards compat
+    cookie_token = websocket.cookies.get("token")
+    effective_token = cookie_token or token
+    if not effective_token:
         await websocket.close(code=4001, reason="Missing token")
         return
 
     try:
-        user_id_str = decode_token(token)
+        user_id_str = decode_token(effective_token)
         user_id = uuid.UUID(user_id_str)
     except Exception:
         await websocket.close(code=4001, reason="Invalid token")

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, createContext, useContext } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { clearToken, api } from "@/lib/api";
+import { api } from "@/lib/api";
 import { SocketProvider } from "@/hooks/useSocket";
 import { useSwipeRight } from "@/hooks/useSwipeRight";
 import Image from "next/image";
@@ -56,13 +56,12 @@ export default function ChatLayout({
     api<TgUser>("/api/auth/me")
       .then(setUser)
       .catch(() => {
-        clearToken();
         router.replace("/");
       });
   }, [router]);
 
-  function handleLogout() {
-    clearToken();
+  async function handleLogout() {
+    await api("/api/auth/logout", { method: "POST" }).catch(() => {});
     router.replace("/");
   }
 
